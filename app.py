@@ -38,25 +38,22 @@ import streamlit as st
 import numpy as np
 import folium
 
+import streamlit as st
+
 def app():
-    st.title('Fertilizer Spread Modeling')
-    
-    # Add Google Maps input via folium
-    center = [latitude, longitude]  # You can allow users to input this
-    m = create_map(center)
-    folium_static(m)
-    
-    # Model setup and interaction
-    D = st.slider('Diffusion Coefficient', 0.0, 1.0, 0.1)
-    u = st.slider('Convection Velocity (u)', -1.0, 1.0, 0.0)
-    v = st.slider('Convection Velocity (v)', -1.0, 1.0, 0.0)
-    
-    # Solve convection-diffusion equation
-    source = np.zeros((rows, cols))  # Add source conditions here
-    concentration = convection_diffusion_2d(D, u, v, source, dt, dx, dy, T)
-    
-    st.write("Concentration Field:")
-    st.pyplot(plot_concentration(concentration))  # A function to plot the concentration
+    # Define default latitude and longitude
+    latitude = 37.7749   # Example: San Francisco latitude
+    longitude = -122.4194   # Example: San Francisco longitude
+
+    # Optionally, allow users to input their own latitude and longitude
+    latitude = st.number_input("Enter Latitude", value=latitude)
+    longitude = st.number_input("Enter Longitude", value=longitude)
+
+    # Set the map center
+    center = [latitude, longitude]  # This is where the error occurred
+
+    # Now you can use 'center' for something like folium map
+    st.write(f"Center of the map is at: {center}")
 
 if __name__ == "__main__":
     app()
