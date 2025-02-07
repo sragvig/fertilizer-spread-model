@@ -1,139 +1,100 @@
-import numpy as np
-import streamlit as st
 import json
+import streamlit as st
 import os
-import folium
-from streamlit_folium import st_folium
-from sklearn.linear_model import LinearRegression
-from geopy.geocoders import Nominatim
-import folium.plugins
 
-USER_DATA_FILE = "user_data.json"  # File to store user data
+# Load user data or create an empty JSON file if it doesn’t exist
+USER_DATA_FILE = "user_data.json"
 
-# Function to load user data from JSON file
-def load_user_data(username):
-    if os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, "r") as file:
-            data = json.load(file)
-            return data.get(username, None)
-    return None
-
-# Function to save user data to JSON file
-def save_user_data(username, data):
-    if os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, "r") as file:
-            stored_data = json.load(file)
-    else:
-        stored_data = {}
-    
-    stored_data[username] = data
-    
+if not os.path.exists(USER_DATA_FILE):
     with open(USER_DATA_FILE, "w") as file:
-        json.dump(stored_data, file)
+        json.dump({}, file)
 
-# Function for the 2D convection-diffusion simulation
-def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
-    rows, cols = source.shape
-    concentration = np.zeros((rows, cols))
+# Function to load user data
+def load_user_data():
+    with open(USER_DATA_FILE, "r") as file:
+        return json.load(file)
 
-    for t in range(T):
-        concentration_new = np.copy(concentration)
-        for i in range(1, rows - 1):
-            for j in range(1, cols - 1):
-                if mask[i, j] == 0:
-                    continue
-                concentration_new[i, j] = concentration[i, j] + dt * (D * (
-                    (concentration[i + 1, j] - 2 * concentration[i, j] + concentration[i - 1, j]) / dx**2 +
-                    (concentration[i, j + 1] - 2 * concentration[i, j] + concentration[i, j - 1]) / dy**2) - 
-                    u * (concentration[i + 1, j] - concentration[i - 1, j]) / (2 * dx) - 
-                    v * (concentration[i, j + 1] - concentration[i, j - 1]) / (2 * dy) + source[i, j])
-        concentration = np.copy(concentration_new)
-    return concentration
+# Function to save user data
+def save_user_data(data):
+    with open(USER_DATA_FILE, "w") as file:
+        json.dump(data, file)
 
-# Streamlit App UI
+# Main Streamlit App
 def app():
-    st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
+    st.set_page_config(page_title="FERN Login", page_icon="🌱", layout="centered")
 
-    # Authentication Check
-    if "user_logged_in" not in st.session_state:
-        st.session_state.user_logged_in = False
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+        st.session_state["username"] = None
+        st.session_state["page"] = "login"
 
-    # Login Page
-    if not st.session_state.user_logged_in:
-        st.title("Login to FERN")
+    user_data = load_user_data()
 
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        
-        if st.button("Login"):
-            user_data = load_user_data(username)
-            if user_data and user_data["password"] == password:
-                st.session_state.user_logged_in = True
-                st.session_state.username = username
-                st.success("Login successful!")
-                st.experimental_rerun()  # Refresh the page to show the main app
-            else:
-                st.error("Invalid username or password")
-
-        if st.button("Sign Up"):
-            st.write("Sign up functionality can be added here!")
-
+    # Navigation based on session state
+    if st.session_state["page"] == "login":
+        login_page(user_data)
+    elif st.session_state["page"] == "profile_setup":
+        profile_setup_page(user_data)
+    elif st.session_state["page"] == "profile":
+        profile_page(user_data)
     else:
-        # Main App content for logged-in users
-        st.markdown("""
-            <h1 style="text-align: center; color: #228B22;">FERN: Fertilizer & Environmental Risk Network</h1>
-            <h3 style="text-align: center; color: #2E8B57;">Predicting Fertilizer Spread and Pollution Risk</h3>
-            <p style="text-align: center; color: #2F4F4F; font-size: 1.1em;">A simple model for understanding fertilizer dispersion and its environmental effects.</p>
-        """, unsafe_allow_html=True)
+        st.session_state["page"] = "login"
 
-        # Sidebar
-        st.sidebar.header("🛠️ Tools")
-        address = st.sidebar.text_input("Enter Address", placeholder="e.g., 123 Main St, Houston")
+def login_page(user_data):
+    st.title("🔑 Login to FERN")
+    
+    auth_choice = st.radio("Choose an option", ["Login", "Sign Up"])
 
-        geolocator = Nominatim(user_agent="fertilizer_model")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
 
-        if st.sidebar.button("Get Coordinates"):
-            location = geolocator.geocode(address)
-            if location:
-                st.session_state.latitude = location.latitude
-                st.session_state.longitude = location.longitude
-                st.sidebar.success(f"Coordinates: {location.latitude}, {location.longitude}")
+    if auth_choice == "Sign Up":
+        if st.button("Create Account"):
+            if username in user_data:
+                st.error("Username already exists. Choose another.")
             else:
-                st.sidebar.error("Could not find the address. Try a different format.")
+                user_data[username] = {"password": password, "address": None}  # Address will be set later
+                save_user_data(user_data)
+                st.session_state["authenticated"] = True
+                st.session_state["username"] = username
+                st.session_state["page"] = "profile_setup"
+                st.experimental_rerun()
+    
+    else:  # Login
+        if st.button("Login"):
+            if username in user_data and user_data[username]["password"] == password:
+                st.session_state["authenticated"] = True
+                st.session_state["username"] = username
+                st.session_state["page"] = "profile"
+                st.success(f"Welcome back, {username}!")
+                st.experimental_rerun()
+            else:
+                st.error("Invalid username or password.")
 
-        # Simulation Parameters and Running Simulation
-        if "latitude" in st.session_state and "longitude" in st.session_state:
-            latitude, longitude = st.session_state.latitude, st.session_state.longitude
-            st.markdown("### 🌍 Map View")
-            st.write("Select areas to exclude from the simulation using the map below.")
+def profile_setup_page(user_data):
+    st.title("🌍 Profile Setup")
+    st.write("Please enter your address to complete your profile.")
 
-            # Create Map
-            m = folium.Map(location=[latitude, longitude], zoom_start=12)
-            draw = folium.plugins.Draw(export=True)
-            m.add_child(draw)
-            map_data = st_folium(m, width=700, height=500)
+    address = st.text_input("Enter your Address")
 
-            fertilizer_amount = st.number_input("Enter Fertilizer Amount (kg/ha)", value=50, min_value=0)
-            fertilizer_type = st.selectbox("Select Fertilizer Type", ["Nitrogen-based", "Phosphate-based", "Potassium-based"])
+    if st.button("Save & Continue"):
+        user_data[st.session_state["username"]]["address"] = address
+        save_user_data(user_data)
+        st.success("Profile setup complete! Redirecting to your profile...")
+        st.session_state["page"] = "profile"
+        st.experimental_rerun()
 
-            if st.button("Run Simulation"):
-                D = 0.01  # Diffusion constant
-                u, v = 0.1, 0.1  # Flow velocity components
-                source = np.zeros((100, 100))
-                source[50, 50] = fertilizer_amount
-                mask = np.ones((100, 100))
-                result = convection_diffusion_2d(D, u, v, source, mask, dt=0.01, dx=1, dy=1, T=50)
+def profile_page(user_data):
+    st.title("👤 My Profile")
+    username = st.session_state["username"]
+    st.write(f"**Username:** {username}")
+    st.write(f"**Address:** {user_data[username]['address'] or 'Not Set'}")
 
-                if fertilizer_amount > 100:
-                    st.warning("Warning: High fertilizer amount may cause pollution risk!")
-
-                st.success("Simulation completed. Check the results below.")
-                st.write(result)
-
-        # Logout Button
-        if st.button("Logout"):
-            st.session_state.user_logged_in = False
-            st.experimental_rerun()  # Refresh to go back to the login page
+    if st.button("Logout"):
+        st.session_state["authenticated"] = False
+        st.session_state["username"] = None
+        st.session_state["page"] = "login"
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     app()
