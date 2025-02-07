@@ -4,6 +4,7 @@ import folium
 from streamlit_folium import st_folium
 from sklearn.linear_model import LinearRegression
 from geopy.geocoders import Nominatim
+import time
 
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
     rows, cols = source.shape
@@ -34,17 +35,23 @@ def predict_constants(model, inputs):
 def app():
     st.title("Fertilizer Spread Model with Pollution Prediction")
     
-    address = st.text_input("Enter Address")
+    address = st.text_input("Enter Address (Avoid ZIP codes for better accuracy)")
     latitude, longitude = None, None
     geolocator = Nominatim(user_agent="fertilizer_model")
     
-    if st.button("Continue"):
-        location = geolocator.geocode(address)
-        if location:
-            latitude, longitude = location.latitude, location.longitude
-            st.session_state.latitude = latitude
-            st.session_state.longitude = longitude
-            st.success(f"Coordinates: {latitude}, {longitude}")
+    if st.button("Get Coordinates"):
+        try:
+            time.sleep(1)  # To avoid hitting rate limits
+            location = geolocator.geocode(address)
+            if location:
+                latitude, longitude = location.latitude, location.longitude
+                st.session_state.latitude = latitude
+                st.session_state.longitude = longitude
+                st.success(f"Coordinates: {latitude}, {longitude}")
+            else:
+                st.error("Could not find the location. Try a different address.")
+        except Exception as e:
+            st.error(f"Error fetching coordinates: {e}")
     
     if "latitude" in st.session_state and "longitude" in st.session_state:
         if st.button("Continue"):
