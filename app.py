@@ -4,7 +4,6 @@ import folium
 from streamlit_folium import st_folium
 from sklearn.linear_model import LinearRegression
 from geopy.geocoders import Nominatim
-import time
 
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
     rows, cols = source.shape
@@ -35,26 +34,26 @@ def predict_constants(model, inputs):
 def app():
     st.title("Fertilizer Spread Model with Pollution Prediction")
     
-    address = st.text_input("Enter Address (Avoid ZIP codes for better accuracy)")
-    latitude, longitude = None, None
+    address = st.text_input("Enter Address")
     geolocator = Nominatim(user_agent="fertilizer_model")
     
     if st.button("Get Coordinates"):
-        try:
-            time.sleep(1)  # To avoid hitting rate limits
-            location = geolocator.geocode(address)
-            if location:
-                latitude, longitude = location.latitude, location.longitude
-                st.session_state.latitude = latitude
-                st.session_state.longitude = longitude
-                st.success(f"Coordinates: {latitude}, {longitude}")
-            else:
-                st.error("Could not find the location. Try a different address.")
-        except Exception as e:
-            st.error(f"Error fetching coordinates: {e}")
+        location = geolocator.geocode(address)
+        if location:
+            st.session_state.latitude = location.latitude
+            st.session_state.longitude = location.longitude
+            st.success(f"Coordinates: {location.latitude}, {location.longitude}")
+        else:
+            st.error("Could not find the address. Try a different format.")
     
     if "latitude" in st.session_state and "longitude" in st.session_state:
+        if "map_shown" not in st.session_state:
+            st.session_state.map_shown = False
+
         if st.button("Continue"):
+            st.session_state.map_shown = True
+        
+        if st.session_state.map_shown:
             latitude, longitude = st.session_state.latitude, st.session_state.longitude
             st.write("### Select areas to exclude from the simulation")
             m = folium.Map(location=[latitude, longitude], zoom_start=12)
@@ -83,5 +82,4 @@ def app():
 
 if __name__ == "__main__":
     app()
-
 
