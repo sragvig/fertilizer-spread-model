@@ -1,51 +1,10 @@
-import streamlit as st
-from replit import db, auth
 import numpy as np
+import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from sklearn.linear_model import LinearRegression
 from geopy.geocoders import Nominatim
 import folium.plugins
-
-# Step 1: Check if user is authenticated, else prompt for login/sign up
-def check_user():
-    if "user" not in st.session_state:
-        st.session_state["user"] = None
-    
-    if not st.session_state["user"]:
-        auth_choice = st.radio("Select an option:", ["Login", "Sign Up"])
-
-        email = st.text_input("Email Address")
-        password = st.text_input("Password", type="password")
-
-        if auth_choice == "Sign Up":
-            if st.button("Create Account"):
-                try:
-                    # Create new user with Replit Auth
-                    auth.sign_up(email=email, password=password)
-                    st.session_state["user"] = email
-                    st.success("Account created successfully!")
-                except Exception as e:
-                    st.error(f"Error creating account: {e}")
-        
-        elif auth_choice == "Login":
-            if st.button("Login"):
-                try:
-                    # Log in existing user with Replit Auth
-                    auth.sign_in(email=email, password=password)
-                    st.session_state["user"] = email
-                    st.success("Logged in successfully!")
-                except Exception as e:
-                    st.error(f"Error logging in: {e}")
-
-    return st.session_state["user"]
-
-# Step 2: Store and retrieve data from Replit DB
-def store_data(user_email, data):
-    db[user_email] = data
-
-def get_data(user_email):
-    return db.get(user_email, "No data found")
 
 # Function for the 2D convection-diffusion simulation
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
@@ -70,12 +29,36 @@ def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
 def app():
     st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
-    user = check_user()
+    # Authentication Check
+    if "user_logged_in" not in st.session_state:
+        st.session_state.user_logged_in = False
 
-    # Step 4: If authenticated, proceed with the app
-    if user:
-        st.write(f"Welcome back, {user}!")
-        st.write("Simulation Results will be saved under your account.")
+    # Login Page
+    if not st.session_state.user_logged_in:
+        st.title("Login to FERN")
+
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        
+        if st.button("Login"):
+            if username == "test_user" and password == "password123":  # Simple hardcoded credentials
+                st.session_state.user_logged_in = True
+                st.session_state.username = username
+                st.success("Login successful!")
+                st.experimental_rerun()  # Refresh the page to show the main app
+            else:
+                st.error("Invalid username or password")
+
+        if st.button("Sign Up"):
+            st.write("Sign up functionality can be added here!")
+
+    else:
+        # Main App content for logged-in users
+        st.markdown("""
+            <h1 style="text-align: center; color: #228B22;">FERN: Fertilizer & Environmental Risk Network</h1>
+            <h3 style="text-align: center; color: #2E8B57;">Predicting Fertilizer Spread and Pollution Risk</h3>
+            <p style="text-align: center; color: #2F4F4F; font-size: 1.1em;">A simple model for understanding fertilizer dispersion and its environmental effects.</p>
+        """, unsafe_allow_html=True)
 
         # Sidebar
         st.sidebar.header("🛠️ Tools")
@@ -123,12 +106,10 @@ def app():
                 st.success("Simulation completed. Check the results below.")
                 st.write(result)
 
-                # Store results
-                store_data(user, result)
-
-        # Retrieve saved data
-        stored_data = get_data(user)
-        st.write(f"Previous simulation results: {stored_data}")
+        # Logout Button
+        if st.button("Logout"):
+            st.session_state.user_logged_in = False
+            st.experimental_rerun()  # Refresh to go back to the login page
 
 if __name__ == "__main__":
     app()
