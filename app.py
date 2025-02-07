@@ -5,8 +5,7 @@ from streamlit_folium import st_folium
 from sklearn.linear_model import LinearRegression
 from geopy.geocoders import Nominatim
 import folium.plugins
-from firebase import firebase_auth  # Import the authentication module
-from replit import auth
+from replit import auth  # Import the replit authentication module
 
 # Function for the 2D convection-diffusion simulation
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
@@ -21,7 +20,7 @@ def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
                     continue
                 concentration_new[i, j] = concentration[i, j] + dt * (D * (
                     (concentration[i + 1, j] - 2 * concentration[i, j] + concentration[i - 1, j]) / dx**2 +
-                    (concentration[i, j + 1] - 2 * concentration[i, j] + concentration[i, j - 1]) / dy**2) -
+                    (concentration[i, j + 1] - 2 * concentration[i, j] + concentration[i, j - 1]) / dy**2) - 
                     u * (concentration[i + 1, j] - concentration[i - 1, j]) / (2 * dx) -
                     v * (concentration[i, j + 1] - concentration[i, j - 1]) / (2 * dy) + source[i, j])
         concentration = np.copy(concentration_new)
@@ -43,10 +42,36 @@ def app():
     # Check authentication first
     if "user" not in st.session_state:
         st.session_state.user = None
-    
+
+    # Login UI
     if not st.session_state.user:
-        firebase_auth()  # Call Firebase login function
-        return  # Stop execution until login is done
+        st.title("Login")
+        email = st.text_input("Email Address")
+        password = st.text_input("Password", type="password")
+        
+        if st.button("Login"):
+            try:
+                # Sign in with Replit auth
+                user = auth.sign_in(email=email, password=password)
+                st.session_state.user = user
+                st.success("Logged in successfully!")
+            except Exception as e:
+                st.error(f"Login failed: {e}")
+        
+        if st.button("Sign Up"):
+            try:
+                # Sign up with Replit auth
+                user = auth.sign_up(email=email, password=password)
+                st.session_state.user = user
+                st.success("Account created successfully!")
+            except Exception as e:
+                st.error(f"Sign-up failed: {e}")
+           
+    else:
+        st.write(f"✅ Logged in as {st.session_state.user['email']}")
+        if st.button("Logout"):
+            st.session_state.user = None
+            st.experimental_rerun()
 
     # Header
     st.markdown("""
