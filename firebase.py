@@ -2,14 +2,13 @@ import pyrebase
 
 # Firebase configuration
 firebase_config = {
-    "apiKey": "YOUR_API_KEY",
-    "authDomain": "YOUR_AUTH_DOMAIN",
-    "databaseURL": "YOUR_DATABASE_URL",
-    "projectId": "YOUR_PROJECT_ID",
-    "storageBucket": "YOUR_STORAGE_BUCKET",
-    "messagingSenderId": "YOUR_MESSAGING_SENDER_ID",
-    "appId": "YOUR_APP_ID",
-    "measurementId": "YOUR_MEASUREMENT_ID"
+  apiKey: "AIzaSyDtKycxFmCzhKGh-sw9B9Xp2wSpWly0Fa8",
+  authDomain: "fern-f1e80.firebaseapp.com",
+  projectId: "fern-f1e80",
+  storageBucket: "fern-f1e80.firebasestorage.app",
+  messagingSenderId: "872903360272",
+  appId: "1:872903360272:web:c7fdd727048d3a40156f95",
+  measurementId: "G-GQP0X9TGPN"
 }
 
 # Initialize Firebase
