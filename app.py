@@ -17,11 +17,14 @@ if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
     st.session_state.longitude = None
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
-if 'show_map' not in st.session_state:
-    st.session_state.show_map = False
+if 'farm_boundary' not in st.session_state:
+    st.session_state.farm_boundary = None
+if 'setting_boundary' not in st.session_state:
+    st.session_state.setting_boundary = False
 
 def navigate(page):
     st.session_state.page = page
+    st.experimental_rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -68,21 +71,17 @@ elif st.session_state.page == "Settings":
 
 # My Farm Page
 elif st.session_state.page == "My Farm":
-    farm_display_name = st.session_state.farm_name if st.session_state.farm_name else "My Farm"
     st.markdown(f"""
-        <h2 style="color: #228B22;">🌍 {farm_display_name}</h2>
+        <h2 style="color: #228B22;">🌍 {st.session_state.farm_name if st.session_state.farm_name else 'My Farm'}</h2>
     """, unsafe_allow_html=True)
     
-    st.write("Would you like to set up the boundaries of your farm?")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Yes"):
-            st.session_state.show_map = True
-    with col2:
-        if st.button("No"):
-            st.session_state.show_map = False
+    if not st.session_state.setting_boundary:
+        setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
+        if setup == "Yes":
+            st.session_state.setting_boundary = True
+            st.experimental_rerun()
     
-    if st.session_state.show_map:
+    if st.session_state.setting_boundary:
         if st.session_state.address:
             geolocator = Nominatim(user_agent="fern_farm_locator")
             location = geolocator.geocode(st.session_state.address)
@@ -91,9 +90,26 @@ elif st.session_state.page == "My Farm":
                 st.session_state.longitude = location.longitude
         
         if st.session_state.latitude and st.session_state.longitude:
+            st.write("### Draw Your Farm Boundary")
             m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12)
-            draw = folium.plugins.Draw(export=True)
+            draw = folium.plugins.Draw(
+                draw_polygon=True, draw_marker=False, draw_rectangle=False, draw_circle=False,
+                draw_circlemarker=False, draw_line=True, edit=True
+            )
             m.add_child(draw)
-            st_folium(m, width=700, height=500)
+            map_data = st_folium(m, width=700, height=500)
+            
+            if map_data and "all_drawings" in map_data:
+                boundary = map_data["all_drawings"]
+                if boundary:
+                    st.session_state.farm_boundary = boundary
+                    st.write("Would you like to save these farm boundaries?")
+                    if st.button("Save Boundaries"):
+                        st.session_state.setting_boundary = False
+                        st.experimental_rerun()
         else:
             st.warning("Please set your farm address in Settings to display the map.")
+    
+    if st.session_state.farm_boundary:
+        st.success("Farm boundaries saved successfully!")
+        st.button("Change Farm Boundaries", on_click=lambda: navigate("My Farm"))
