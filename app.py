@@ -3,6 +3,7 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from sklearn.linear_model import LinearRegression
+from geopy.geocoders import Nominatim
 
 # Function to simulate the convection-diffusion equation
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
@@ -36,9 +37,18 @@ def predict_constants(model, inputs):
 def app():
     st.title("Fertilizer Spread Model with Pollution Prediction")
     
-    # User input for coordinates
-    latitude = st.number_input("Enter Latitude", value=37.7749)
-    longitude = st.number_input("Enter Longitude", value=-122.4194)
+    # User input for address
+    address = st.text_input("Enter Address")
+    geolocator = Nominatim(user_agent="fertilizer_model")
+    
+    if st.button("Get Coordinates"):
+        location = geolocator.geocode(address)
+        if location:
+            latitude, longitude = location.latitude, location.longitude
+            st.success(f"Coordinates: {latitude}, {longitude}")
+        else:
+            st.error("Address not found. Please enter a valid address.")
+            return
     
     # Map for user to shade out regions (e.g., rivers, houses)
     st.write("### Select areas to exclude from the simulation")
