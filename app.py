@@ -39,7 +39,7 @@ def app():
     latitude, longitude = None, None
     geolocator = Nominatim(user_agent="fertilizer_model")
     
-    if st.button("Get Coordinates"):
+    if st.button("Continue"):
         try:
             time.sleep(1)  # To avoid hitting rate limits
             location = geolocator.geocode(address)
