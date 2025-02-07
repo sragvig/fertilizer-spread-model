@@ -6,91 +6,131 @@ import folium.plugins
 import json
 import os
 
-# Load user data function
+# File to store user data
+USER_DATA_FILE = "user_data.json"
+
 def load_user_data():
-    if os.path.exists("users.json"):
-        with open("users.json", "r") as file:
-            return json.load(file)
+    if os.path.exists(USER_DATA_FILE):
+        with open(USER_DATA_FILE, "r") as f:
+            return json.load(f)
     return {}
 
-# Save user data function
 def save_user_data(data):
-    with open("users.json", "w") as file:
-        json.dump(data, file, indent=4)
+    with open(USER_DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
-# Load user session data
+# Initialize user data
 user_data = load_user_data()
 
-# Streamlit app layout
-st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
-
-# Navigation
-st.sidebar.title("Navigation")
+# Streamlit Session State
 if "page" not in st.session_state:
-    st.session_state.page = "Home"
+    st.session_state.page = "login"
+if "logged_in_user" not in st.session_state:
+    st.session_state.logged_in_user = None
 
-if st.sidebar.button("Home"):
-    st.session_state.page = "Home"
-if st.sidebar.button("Settings"):
-    st.session_state.page = "Settings"
-if st.sidebar.button("My Farm"):
-    st.session_state.page = "My Farm"
-
-# Home Page
-if st.session_state.page == "Home":
+def show_login_signup():
     st.title("Welcome to FERN!")
-    st.write("Quick farm summary:")
-    if "farm_name" in st.session_state:
-        st.write(f"Farm Name: {st.session_state.farm_name}")
-        st.write("Last time fertilizer was used: N/A")
-        st.write("Anticipated rain day: X days")
-    else:
-        st.write("No farm data found. Please set up your farm in 'My Farm'.")
-
-# Settings Page
-elif st.session_state.page == "Settings":
-    st.title("Settings")
-    if "username" in st.session_state:
-        st.write(f"Logged in as: {st.session_state.username}")
-        if st.button("Sign Out"):
-            st.session_state.clear()
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Login"):
+            st.session_state.page = "login_form"
+            st.experimental_rerun()
+    with col2:
+        if st.button("Sign Up"):
+            st.session_state.page = "signup_form"
             st.experimental_rerun()
 
-# My Farm Page
-elif st.session_state.page == "My Farm":
+def login_form():
+    st.title("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if username in user_data and user_data[username]["password"] == password:
+            st.session_state.logged_in_user = username
+            st.session_state.page = "home"
+            st.experimental_rerun()
+        else:
+            st.error("Invalid username or password.")
+
+def signup_form():
+    st.title("Sign Up")
+    username = st.text_input("Choose a Username")
+    password = st.text_input("Choose a Password", type="password")
+    if st.button("Create Account"):
+        if username in user_data:
+            st.error("Username already exists. Choose another.")
+        else:
+            user_data[username] = {"password": password, "farm_name": "", "location": None}
+            save_user_data(user_data)
+            st.session_state.logged_in_user = username
+            st.session_state.page = "setup_farm"
+            st.experimental_rerun()
+
+def home_page():
+    st.title("Welcome to FERN!")
+    user = st.session_state.logged_in_user
+    if user and user in user_data:
+        st.write(f"Farm Name: {user_data[user]['farm_name']}")
+        st.write("Last fertilizer application: TBD")
+        st.write("Anticipated rain in: X days")
+
+def settings_page():
+    st.title("Settings")
+    user = st.session_state.logged_in_user
+    if user:
+        st.write(f"Username: {user}")
+        st.write(f"Farm Name: {user_data[user]['farm_name']}")
+        if st.button("Sign Out"):
+            st.session_state.logged_in_user = None
+            st.session_state.page = "login"
+            st.experimental_rerun()
+
+def my_farm_page():
     st.title("My Farm")
-    geolocator = Nominatim(user_agent="farm_locator")
+    user = st.session_state.logged_in_user
+    if not user:
+        st.error("Please log in first.")
+        return
     
-    # Farm Name Input
-    farm_name = st.text_input("Enter your Farm Name", st.session_state.get("farm_name", ""))
+    farm_name = st.text_input("Enter Farm Name", user_data[user]["farm_name"])
+    if st.button("Save Farm Name"):
+        user_data[user]["farm_name"] = farm_name
+        save_user_data(user_data)
+        st.success("Farm name saved!")
+    
+    geolocator = Nominatim(user_agent="farm_locator")
     if st.button("Locate Farm"):
         location = geolocator.geocode(farm_name)
         if location:
-            st.session_state.farm_name = farm_name
-            st.session_state.latitude = location.latitude
-            st.session_state.longitude = location.longitude
-            st.success(f"Farm located at {location.latitude}, {location.longitude}")
+            user_data[user]["location"] = (location.latitude, location.longitude)
+            save_user_data(user_data)
+            st.success(f"Farm located at: {location.latitude}, {location.longitude}")
         else:
-            st.error("Could not find farm. Try a different name.")
-
-    if "latitude" in st.session_state and "longitude" in st.session_state:
-        # Prompt to set farm boundaries first
-        st.subheader("Set Your Farm Boundaries")
-        m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12)
+            st.error("Could not find farm location.")
+    
+    if user_data[user]["location"]:
+        lat, lon = user_data[user]["location"]
+        st.write("### Set Farm Boundaries")
+        m = folium.Map(location=[lat, lon], zoom_start=12)
         draw = folium.plugins.Draw(export=True)
         m.add_child(draw)
         map_data = st_folium(m, width=700, height=500)
         
-        if st.button("Confirm Boundaries"):
-            st.success("Boundaries set! Now draw omitted areas.")
-            st.session_state.boundaries_confirmed = True
+        st.write("### Mark Omitted Areas")
+        st.write("Use the map to mark areas that should be excluded from analysis.")
         
-        if st.session_state.get("boundaries_confirmed", False):
-            st.subheader("Mark Omitted Areas")
-            m2 = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12)
-            draw2 = folium.plugins.Draw(export=True)
-            m2.add_child(draw2)
-            st_folium(m2, width=700, height=500)
-            
-            if st.button("Save Omitted Areas"):
-                st.success("Omitted areas saved!")
+# Navigation
+if st.session_state.page == "login":
+    show_login_signup()
+elif st.session_state.page == "login_form":
+    login_form()
+elif st.session_state.page == "signup_form":
+    signup_form()
+elif st.session_state.page == "home":
+    home_page()
+elif st.session_state.page == "settings":
+    settings_page()
+elif st.session_state.page == "my_farm":
+    my_farm_page()
+elif st.session_state.page == "setup_farm":
+    my_farm_page()
