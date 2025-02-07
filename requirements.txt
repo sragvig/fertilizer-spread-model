@@ -8,3 +8,4 @@ geopy
 pyrebase4
 gcloud
 firebase-admin
+httpx-oauth
