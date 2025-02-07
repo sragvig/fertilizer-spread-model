@@ -42,37 +42,39 @@ def app():
         location = geolocator.geocode(address)
         if location:
             latitude, longitude = location.latitude, location.longitude
+            st.session_state.latitude = latitude
+            st.session_state.longitude = longitude
             st.success(f"Coordinates: {latitude}, {longitude}")
-        else:
-            st.error("Address not found. Please enter a valid address.")
-            return
     
-    if latitude and longitude:
-        st.write("### Select areas to exclude from the simulation")
-        m = folium.Map(location=[latitude, longitude], zoom_start=12)
-        draw = folium.plugins.Draw(export=True)
-        m.add_child(draw)
-        
-        map_data = st_folium(m, width=700, height=500)
-        
-        mask = np.ones((100, 100))
-        
-        fertilizer_amount = st.number_input("Enter Fertilizer Amount (kg/ha)", value=50)
-        fertilizer_type = st.selectbox("Select Fertilizer Type", ["Nitrogen-based", "Phosphate-based", "Potassium-based"])
-        
-        if st.button("Run Simulation"):
-            D = 0.01
-            u, v = 0.1, 0.1
-            source = np.zeros((100, 100))
-            source[50, 50] = fertilizer_amount
-            result = convection_diffusion_2d(D, u, v, source, mask, dt=0.01, dx=1, dy=1, T=50)
+    if "latitude" in st.session_state and "longitude" in st.session_state:
+        if st.button("Continue"):
+            latitude, longitude = st.session_state.latitude, st.session_state.longitude
+            st.write("### Select areas to exclude from the simulation")
+            m = folium.Map(location=[latitude, longitude], zoom_start=12)
+            draw = folium.plugins.Draw(export=True)
+            m.add_child(draw)
             
-            if fertilizer_amount > 100:
-                st.warning("Warning: High fertilizer amount may cause pollution risk!")
+            map_data = st_folium(m, width=700, height=500)
             
-            st.success("Simulation completed. Check results below.")
-            st.write(result)
+            mask = np.ones((100, 100))
+            
+            fertilizer_amount = st.number_input("Enter Fertilizer Amount (kg/ha)", value=50)
+            fertilizer_type = st.selectbox("Select Fertilizer Type", ["Nitrogen-based", "Phosphate-based", "Potassium-based"])
+            
+            if st.button("Run Simulation"):
+                D = 0.01
+                u, v = 0.1, 0.1
+                source = np.zeros((100, 100))
+                source[50, 50] = fertilizer_amount
+                result = convection_diffusion_2d(D, u, v, source, mask, dt=0.01, dx=1, dy=1, T=50)
+                
+                if fertilizer_amount > 100:
+                    st.warning("Warning: High fertilizer amount may cause pollution risk!")
+                
+                st.success("Simulation completed. Check results below.")
+                st.write(result)
 
 if __name__ == "__main__":
     app()
+
 
