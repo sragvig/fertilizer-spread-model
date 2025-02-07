@@ -1,8 +1,13 @@
+import json
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
+import streamlit as st
+
+# Load Firebase credentials from Streamlit secrets
+firebase_credentials = json.loads(st.secrets["firebase_credentials"])
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate(r"C:\Users\Sragvi\Documents\fertilizer-spread-model\your-service-account-file.json")  # Use the correct path
+cred = credentials.Certificate(firebase_credentials)
 firebase_admin.initialize_app(cred)
 
 # Firestore client
@@ -15,13 +20,8 @@ def sign_up(email, password):
     return user
 
 def log_in(email, password):
-    try:
-        user = auth.get_user_by_email(email)
-        # Assuming the password check is handled on the client-side (e.g., using Pyrebase)
-        # Firebase Admin SDK doesn't support password-based login directly.
-        return user
-    except:
-        raise ValueError("Invalid email or password.")
+    # Implement login logic using firebase-admin, or use pyrebase if you need to handle client-side actions
+    pass
 
 def log_out():
     # Implement log out logic, if needed
