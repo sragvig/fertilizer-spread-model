@@ -2,7 +2,6 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
-import folium.plugins
 
 # Streamlit App UI
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
@@ -22,10 +21,9 @@ if 'farm_boundary' not in st.session_state:
 if 'setting_boundary' not in st.session_state:
     st.session_state.setting_boundary = False
 
-# Navigation function without rerun
+# Navigation function
 def navigate(page):
     st.session_state.page = page
-    # No need for st.experimental_rerun() here; Streamlit will automatically handle the page switch.
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -80,7 +78,7 @@ elif st.session_state.page == "My Farm":
         setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
         if setup == "Yes":
             st.session_state.setting_boundary = True
-            navigate("My Farm")  # Directly navigate after boundary setup choice.
+            navigate("My Farm")
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
@@ -92,35 +90,41 @@ elif st.session_state.page == "My Farm":
         
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
+            
+            # Initialize map
             m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12)
+
+            # Correctly configure the Draw plugin
+            draw_options = {
+                "polyline": {"shapeOptions": {"color": "blue"}},
+                "polygon": False,  # Disable polygon, as we're using polylines
+                "marker": False,
+                "circle": False,
+                "rectangle": False,
+                "circlemarker": False
+            }
             
-            # Correctly configuring the Draw plugin to allow polyline drawing
-            draw = folium.plugins.Draw(
-                draw_polygon=False, draw_marker=False, draw_rectangle=False, draw_circle=False,
-                draw_circlemarker=False, draw_line=True, edit=True
-            )
-            m.add_child(draw)
+            folium.plugins.Draw(export=True, draw_options=draw_options).add_to(m)
+            
+            # Display the interactive map
             map_data = st_folium(m, width=700, height=500)
-            
+
+            # Process drawn boundaries
             if map_data and "all_drawings" in map_data:
                 boundary = map_data["all_drawings"]
                 if boundary:
-                    # Check if polyline is closed by detecting if last point is close to first
                     coords = boundary[0]['geometry']['coordinates']
+                    
+                    # Check if polyline closes itself
                     if len(coords) > 2 and coords[0] == coords[-1]:
                         st.session_state.farm_boundary = boundary
                         st.write("Would you like to save these farm boundaries?")
                         if st.button("Save Boundaries"):
                             st.session_state.setting_boundary = False
-                            navigate("My Farm")  # Navigate after saving boundaries
+                            navigate("My Farm")
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
         st.button("Change Farm Boundaries", on_click=lambda: navigate("My Farm"))
-
-    if st.session_state.farm_boundary:
-        st.success("Farm boundaries saved successfully!")
-        st.button("Change Farm Boundaries", on_click=lambda: navigate("My Farm"))
-
