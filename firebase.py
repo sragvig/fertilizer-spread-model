@@ -2,12 +2,12 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
-# ✅ No need to parse JSON manually
+# ✅ Load credentials correctly
 firebase_credentials = st.secrets["firebase_credentials"]
 
 # ✅ Ensure Firebase initializes only once
 if not firebase_admin._apps:
-    cred = credentials.Certificate(dict(firebase_credentials))  # Convert TOML to dict
+    cred = credentials.Certificate(firebase_credentials)  # No need for dict()
     firebase_admin.initialize_app(cred)
 
 # Firestore database
