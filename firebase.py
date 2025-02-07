@@ -1,39 +1,41 @@
-import firebase_admin
-from firebase_admin import credentials, auth, firestore
 import streamlit as st
+import json
+import firebase_admin
+from firebase_admin import credentials, firestore, auth
 
-# Initialize Firebase
+# Load Firebase credentials from Streamlit secrets
+firebase_credentials = json.loads(st.secrets["firebase_credentials"])
+
+# Initialize Firebase app only once to avoid re-initialization errors
 if not firebase_admin._apps:
-    firebase_credentials = st.secrets["firebase_credentials"]
     cred = credentials.Certificate(firebase_credentials)
     firebase_admin.initialize_app(cred)
 
-# Firestore client
+# Firestore database
 db = firestore.client()
 
 # Authentication Functions
 def sign_up(email, password):
+    """Register a new user with Firebase Authentication."""
     try:
         user = auth.create_user(email=email, password=password)
-        store_user_data(user)  # Store user data in Firestore
-        return {"success": True, "message": f"User {email} created successfully!"}
+        store_user_data(user)
+        return user
     except Exception as e:
-        return {"success": False, "message": str(e)}
+        st.error(f"Error signing up: {e}")
+        return None
 
 def log_in(email, password):
-    try:
-        user = auth.get_user_by_email(email)
-        st.session_state["user"] = {"uid": user.uid, "email": email}
-        return {"success": True, "message": f"Welcome back, {email}!"}
-    except Exception as e:
-        return {"success": False, "message": "Invalid credentials or user not found."}
+    """Firebase Admin SDK does not support login. Use Firebase Authentication API."""
+    st.warning("Login should be handled on the client side.")
 
 def log_out():
-    st.session_state.pop("user", None)
-    return {"success": True, "message": "Logged out successfully."}
+    """Logout is managed client-side with Firebase Authentication."""
+    st.warning("Logout should be handled on the client side.")
 
-# Store user data in Firestore
+# Store User Data in Firestore
 def store_user_data(user):
+    """Store user information in Firestore."""
     user_ref = db.collection('users').document(user.uid)
     user_ref.set({
         'email': user.email,
