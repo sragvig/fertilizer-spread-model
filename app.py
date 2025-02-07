@@ -20,13 +20,15 @@ if 'page' not in st.session_state:
 
 def navigate(page):
     st.session_state.page = page
-    st.experimental_rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
-st.sidebar.button("🏠 Home", on_click=lambda: navigate("Home"))
-st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
-st.sidebar.button("🌍 My Farm", on_click=lambda: navigate("My Farm"))
+if st.sidebar.button("🏠 Home"):
+    navigate("Home")
+if st.sidebar.button("⚙️ Settings"):
+    navigate("Settings")
+if st.sidebar.button("🌍 My Farm"):
+    navigate("My Farm")
 
 # Home Page
 if st.session_state.page == "Home":
@@ -63,7 +65,8 @@ elif st.session_state.page == "Settings":
         st.session_state.address = address
         st.success("Farm details updated successfully!")
     
-    st.button("Sign Out", on_click=lambda: navigate("Home"))
+    if st.button("Sign Out"):
+        navigate("Home")
 
 # My Farm Page
 elif st.session_state.page == "My Farm":
@@ -86,3 +89,4 @@ elif st.session_state.page == "My Farm":
         st_folium(m, width=700, height=500)
     else:
         st.warning("Please set your farm address in Settings to display the map.")
+        
