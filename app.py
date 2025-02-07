@@ -1,10 +1,35 @@
 import numpy as np
 import streamlit as st
+import json
+import os
 import folium
 from streamlit_folium import st_folium
 from sklearn.linear_model import LinearRegression
 from geopy.geocoders import Nominatim
 import folium.plugins
+
+USER_DATA_FILE = "user_data.json"  # File to store user data
+
+# Function to load user data from JSON file
+def load_user_data(username):
+    if os.path.exists(USER_DATA_FILE):
+        with open(USER_DATA_FILE, "r") as file:
+            data = json.load(file)
+            return data.get(username, None)
+    return None
+
+# Function to save user data to JSON file
+def save_user_data(username, data):
+    if os.path.exists(USER_DATA_FILE):
+        with open(USER_DATA_FILE, "r") as file:
+            stored_data = json.load(file)
+    else:
+        stored_data = {}
+    
+    stored_data[username] = data
+    
+    with open(USER_DATA_FILE, "w") as file:
+        json.dump(stored_data, file)
 
 # Function for the 2D convection-diffusion simulation
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
@@ -41,7 +66,8 @@ def app():
         password = st.text_input("Password", type="password")
         
         if st.button("Login"):
-            if username == "test_user" and password == "password123":  # Simple hardcoded credentials
+            user_data = load_user_data(username)
+            if user_data and user_data["password"] == password:
                 st.session_state.user_logged_in = True
                 st.session_state.username = username
                 st.success("Login successful!")
@@ -75,7 +101,7 @@ def app():
             else:
                 st.sidebar.error("Could not find the address. Try a different format.")
 
-        # Map Section
+        # Simulation Parameters and Running Simulation
         if "latitude" in st.session_state and "longitude" in st.session_state:
             latitude, longitude = st.session_state.latitude, st.session_state.longitude
             st.markdown("### 🌍 Map View")
@@ -87,11 +113,9 @@ def app():
             m.add_child(draw)
             map_data = st_folium(m, width=700, height=500)
 
-            # Simulation Parameters
             fertilizer_amount = st.number_input("Enter Fertilizer Amount (kg/ha)", value=50, min_value=0)
             fertilizer_type = st.selectbox("Select Fertilizer Type", ["Nitrogen-based", "Phosphate-based", "Potassium-based"])
 
-            # Running Simulation
             if st.button("Run Simulation"):
                 D = 0.01  # Diffusion constant
                 u, v = 0.1, 0.1  # Flow velocity components
