@@ -93,4 +93,55 @@ def app():
 
 if __name__ == "__main__":
     app()
+import streamlit as st
+from firebase import sign_up, log_in, log_out
+
+# Streamlit UI
+def login():
+    st.title("Welcome to FERN")
+    
+    menu = ["Login", "Sign Up"]
+    choice = st.sidebar.selectbox("Select Action", menu)
+
+    if choice == "Login":
+        st.subheader("Login Section")
+        email = st.text_input("Email", "")
+        password = st.text_input("Password", "", type="password")
+        
+        if st.button("Login"):
+            try:
+                user = log_in(email, password)
+                st.session_state.user = user
+                st.success("Login successful")
+                st.write(f"Welcome {email}!")
+            except:
+                st.error("Invalid email or password.")
+    
+    elif choice == "Sign Up":
+        st.subheader("Sign Up Section")
+        email = st.text_input("Email", "")
+        password = st.text_input("Password", "", type="password")
+        confirm_password = st.text_input("Confirm Password", "", type="password")
+        
+        if password == confirm_password:
+            if st.button("Sign Up"):
+                try:
+                    user = sign_up(email, password)
+                    st.success("Account created successfully")
+                except:
+                    st.error("Error during signup. Please try again.")
+        else:
+            st.warning("Passwords do not match.")
+
+# Main app functionality
+def app():
+    if "user" in st.session_state:
+        st.title(f"Welcome to FERN, {st.session_state.user['email']}!")
+        # Add your simulation functionality here
+        st.write("You are logged in!")
+    else:
+        login()
+
+if __name__ == "__main__":
+    app()
 
