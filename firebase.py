@@ -3,15 +3,15 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 # Firebase configuration
-firebase_config = {
-    "apiKey": "AIzaSyDtKycxFmCzhKGh-sw9B9Xp2wSpWly0Fa8",
-    "authDomain": "fern-f1e80.firebaseapp.com",
-    "projectId": "fern-f1e80",
-    "storageBucket": "fern-f1e80.appspot.com",
-    "messagingSenderId": "872903360272",
-    "appId": "1:872903360272:web:c7fdd727048d3a40156f95",
-    "measurementId": "G-GQP0X9TGPN"
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyDtKycxFmCzhKGh-sw9B9Xp2wSpWly0Fa8",
+  authDomain: "fern-f1e80.firebaseapp.com",
+  projectId: "fern-f1e80",
+  storageBucket: "fern-f1e80.firebasestorage.app",
+  messagingSenderId: "872903360272",
+  appId: "1:872903360272:web:c7fdd727048d3a40156f95",
+  measurementId: "G-GQP0X9TGPN"
+};
 
 # Initialize Firebase
 firebase = pyrebase.initialize_app(firebase_config)
