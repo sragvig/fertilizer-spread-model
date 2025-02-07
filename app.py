@@ -38,7 +38,7 @@ def app():
     latitude, longitude = None, None
     geolocator = Nominatim(user_agent="fertilizer_model")
     
-    if st.button("Get Coordinates"):
+    if st.button("Continue"):
         location = geolocator.geocode(address)
         if location:
             latitude, longitude = location.latitude, location.longitude
