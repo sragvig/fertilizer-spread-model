@@ -5,6 +5,7 @@ from streamlit_folium import st_folium
 from sklearn.linear_model import LinearRegression
 from geopy.geocoders import Nominatim
 import folium.plugins
+from firebase import firebase_auth  # Import the authentication module
 
 # Function for the 2D convection-diffusion simulation
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
@@ -37,6 +38,14 @@ def predict_constants(model, inputs):
 # Streamlit App UI
 def app():
     st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
+
+    # Check authentication first
+    if "user" not in st.session_state:
+        st.session_state.user = None
+    
+    if not st.session_state.user:
+        firebase_auth()  # Call Firebase login function
+        return  # Stop execution until login is done
 
     # Header
     st.markdown("""
@@ -91,5 +100,11 @@ def app():
             st.success("Simulation completed. Check the results below.")
             st.write(result)
 
+    # Sign-out button
+    if st.sidebar.button("Logout"):
+        st.session_state.user = None
+        st.rerun()  # Force a rerun to go back to login
+
 if __name__ == "__main__":
     app()
+
