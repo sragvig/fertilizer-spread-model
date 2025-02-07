@@ -2,23 +2,23 @@ import pyrebase
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDtKycxFmCzhKGh-sw9B9Xp2wSpWly0Fa8",
-  authDomain: "fern-f1e80.firebaseapp.com",
-  projectId: "fern-f1e80",
-  storageBucket: "fern-f1e80.firebasestorage.app",
-  messagingSenderId: "872903360272",
-  appId: "1:872903360272:web:c7fdd727048d3a40156f95",
-  measurementId: "G-GQP0X9TGPN"
-};
+# Correct Firebase configuration syntax for Python
+firebase_config = {
+    "apiKey": "AIzaSyDtKycxFmCzhKGh-sw9B9Xp2wSpWly0Fa8",
+    "authDomain": "fern-f1e80.firebaseapp.com",
+    "projectId": "fern-f1e80",
+    "storageBucket": "fern-f1e80.appspot.com",
+    "messagingSenderId": "872903360272",
+    "appId": "1:872903360272:web:c7fdd727048d3a40156f95",
+    "measurementId": "G-GQP0X9TGPN"
+}
 
-# Initialize Firebase
+# Initialize Firebase with pyrebase (for auth)
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
 
-# Initialize Firebase Admin SDK for Firestore
-cred = credentials.Certificate(r'C:\Users\Sragvi\Documents\fertilizer-spread-model\your-service-account-file.json')  # Replace with the correct path to your Firebase service account JSON file
+# Initialize Firebase Admin SDK for Firestore (for server-side operations)
+cred = credentials.Certificate(r'C:\Users\Sragvi\Documents\fertilizer-spread-model\your-service-account-file.json')  # Adjust path to your service account key
 firebase_admin.initialize_app(cred)
 
 # Firestore client
