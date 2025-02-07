@@ -144,4 +144,16 @@ def app():
 
 if __name__ == "__main__":
     app()
+from firebase_admin import firestore
+
+# Initialize Firestore
+db = firestore.client()
+
+# Store user data in Firestore after signup
+def store_user_data(user):
+    user_ref = db.collection('users').document(user['localId'])
+    user_ref.set({
+        'email': user['email'],
+        'created_at': firestore.SERVER_TIMESTAMP
+    })
 
