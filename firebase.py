@@ -18,7 +18,7 @@ firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
 
 # Initialize Firebase Admin SDK for Firestore
-cred = credentials.Certificate('C:\Users\Sragvi\Documents\fertilizer-spread-model')  # Replace with the correct path to your Firebase service account JSON file
+cred = credentials.Certificate(r'C:\Users\Sragvi\Documents\fertilizer-spread-model\your-service-account-file.json')  # Replace with the correct path to your Firebase service account JSON file
 firebase_admin.initialize_app(cred)
 
 # Firestore client
