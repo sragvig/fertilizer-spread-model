@@ -2,7 +2,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("C:\Users\Sragvi\Downloads\fern-f1e80-firebase-adminsdk-fbsvc-e684cce0d8.json")  # Path to your service account file
+cred = credentials.Certificate("C:\Users\Sragvi\Downloads\fern-f1e80-firebase-adminsdk-fbsvc-e684cce0d8.json")  # Use the correct path
 firebase_admin.initialize_app(cred)
 
 # Firestore client
@@ -15,8 +15,13 @@ def sign_up(email, password):
     return user
 
 def log_in(email, password):
-    # Implement login logic using firebase-admin, or use pyrebase if you need to handle client-side actions
-    pass
+    try:
+        user = auth.get_user_by_email(email)
+        # Assuming the password check is handled on the client-side (e.g., using Pyrebase)
+        # Firebase Admin SDK doesn't support password-based login directly.
+        return user
+    except:
+        raise ValueError("Invalid email or password.")
 
 def log_out():
     # Implement log out logic, if needed
