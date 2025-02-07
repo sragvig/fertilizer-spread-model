@@ -58,7 +58,21 @@ def login_page(user_data):
                 st.session_state["authenticated"] = True
                 st.session_state["username"] = username
                 st.session_state["page"] = "profile_setup"
+                st.experimental_rerun()  # Safe retry mechanism
+                return
+    
+    else:  # Login
+        if st.button("Login"):
+            if username in user_data and user_data[username]["password"] == password:
+                st.session_state["authenticated"] = True
+                st.session_state["username"] = username
+                st.session_state["page"] = "profile"
+                st.success(f"Welcome back, {username}!")
                 st.experimental_rerun()
+                return
+            else:
+                st.error("Invalid username or password.")
+
     
     else:  # Login
         if st.button("Login"):
