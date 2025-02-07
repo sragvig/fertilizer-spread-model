@@ -53,7 +53,7 @@ def login():
                 st.session_state.user = user
                 st.success("Login successful")
                 st.write(f"Welcome {email}!")
-            except:
+            except ValueError:
                 st.error("Invalid email or password.")
     
     elif choice == "Sign Up":
@@ -67,8 +67,8 @@ def login():
                 try:
                     user = sign_up(email, password)
                     st.success("Account created successfully")
-                except:
-                    st.error("Error during signup. Please try again.")
+                except Exception as e:
+                    st.error(f"Error during signup: {str(e)}")
         else:
             st.warning("Passwords do not match.")
 
@@ -77,11 +77,9 @@ def app():
     st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
     
     # Header Section
-    st.markdown("""
-        <h1 style="text-align: center; color: #228B22;">FERN: Fertilizer & Environmental Risk Network</h1>
-        <h3 style="text-align: center; color: #2E8B57;">Predicting Fertilizer Spread and Pollution Risk</h3>
-        <p style="text-align: center; color: #2F4F4F; font-size: 1.1em;">A simple model for understanding fertilizer dispersion and its environmental effects.</p>
-    """, unsafe_allow_html=True)
+    st.markdown("""<h1 style="text-align: center; color: #228B22;">FERN: Fertilizer & Environmental Risk Network</h1>
+    <h3 style="text-align: center; color: #2E8B57;">Predicting Fertilizer Spread and Pollution Risk</h3>
+    <p style="text-align: center; color: #2F4F4F; font-size: 1.1em;">A simple model for understanding fertilizer dispersion and its environmental effects.</p>""", unsafe_allow_html=True)
 
     # Sidebar for easy navigation
     st.sidebar.header("🛠️ Tools")
@@ -135,4 +133,3 @@ if __name__ == "__main__":
         app()  # Run main app
     else:
         login()  # Show login page
-
