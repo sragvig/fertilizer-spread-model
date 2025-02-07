@@ -7,3 +7,4 @@ streamlit_folium
 geopy
 pyrebase4
 gcloud
+firebase-admin
