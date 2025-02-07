@@ -5,6 +5,8 @@ from firebase_admin import credentials, firestore, auth
 # ✅ Load credentials correctly
 firebase_credentials = st.secrets["firebase_credentials"]
 
+st.write(st.secrets["firebase_credentials"])
+
 # ✅ Ensure Firebase initializes only once
 if not firebase_admin._apps:
     cred = credentials.Certificate(firebase_credentials)  # No need for dict()
