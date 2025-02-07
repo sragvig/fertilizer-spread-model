@@ -2,7 +2,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("C:\Users\Sragvi\Downloads\fern-f1e80-firebase-adminsdk-fbsvc-e684cce0d8.json")  # Use the correct path
+cred = credentials.Certificate("C:\Users\Sragvi\Documents\fertilizer-spread-model\fern-f1e80-firebase-adminsdk-fbsvc-e684cce0d8.json")  # Use the correct path
 firebase_admin.initialize_app(cred)
 
 # Firestore client
