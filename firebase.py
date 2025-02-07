@@ -3,6 +3,13 @@ from firebase_admin import credentials, auth
 import streamlit as st
 import json
 
+# Check if the Firebase secret is already a dictionary
+firebase_config = st.secrets["firebase"]
+
+# If it's not a dictionary, you can load it from JSON
+if isinstance(firebase_config, str):
+    firebase_config = json.loads(firebase_config)
+
 # Load Firebase credentials from Streamlit secrets
 firebase_config = json.loads(st.secrets["firebase"])
 
