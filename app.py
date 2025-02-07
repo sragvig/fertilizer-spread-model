@@ -6,6 +6,7 @@ from sklearn.linear_model import LinearRegression
 from geopy.geocoders import Nominatim
 import folium.plugins
 from firebase import firebase_auth  # Import the authentication module
+from replit import auth
 
 # Function for the 2D convection-diffusion simulation
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
