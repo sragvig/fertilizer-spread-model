@@ -1,6 +1,7 @@
-numpy
 streamlit
+replit
 folium
 streamlit-folium
 scikit-learn
 geopy
+numpy
