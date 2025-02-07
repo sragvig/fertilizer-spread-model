@@ -40,32 +40,38 @@ def app():
         return r.status_code == 200
 
     if not st.session_state.signed_in:
-        choice = st.selectbox("Login or Sign up", ["Login", "Sign up"])
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
+        st.header("🔑 Authentication")
+        choice = st.radio("Select an option", ["Login", "Sign up"], index=0)
+        email = st.text_input("📧 Email", placeholder="Enter your email")
+        password = st.text_input("🔒 Password", type="password", placeholder="Enter your password")
 
         if choice == "Sign up":
-            if st.button("Create Account"):
+            if st.button("Create Account 📝"):
                 success, message = sign_up(email, password)
                 if success:
                     st.success("Account created! Please log in.")
                 else:
                     st.error(message)
         else:
-            if st.button("Login"):
+            if st.button("Login 🔓"):
                 success, message = sign_in(email, password)
                 if success:
                     st.success("Logged in successfully!")
                 else:
                     st.error(message)
 
-        if st.button("Forgot Password"):
+        if st.button("Forgot Password? ❓"):
             if reset_password(email):
-                st.success("Reset email sent!")
+                st.success("Reset email sent! Check your inbox.")
             else:
-                st.error("Reset failed. Check email.")
+                st.error("Reset failed. Check email format.")
 
     else:
-        st.text(f"Logged in as: {st.session_state.email}")
-        if st.button("Sign Out"):
+        st.subheader(f"✅ Logged in as: {st.session_state.email}")
+        if st.button("Sign Out 🚪"):
             st.session_state.signed_in = False
+            st.experimental_rerun()
+
+if __name__ == "__main__":
+    app()
+
