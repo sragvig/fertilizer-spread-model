@@ -1,58 +1,75 @@
-import numpy as np
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 import folium.plugins
 
-# Streamlit App UI
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
-# Header Section
-st.markdown("""
-    <h1 style="text-align: center; color: #228B22;">Welcome to FERN</h1>
-    <h3 style="text-align: center; color: #2E8B57;">Fertilizer & Environmental Risk Network</h3>
-""", unsafe_allow_html=True)
+# Default user login (no authentication needed)
+USERNAME = "fern"
+PASSWORD = "soil"
 
-# Navigation buttons
-page = st.sidebar.radio("Navigation", ["Home", "My Farm", "Settings"])
+# Initialize session state
+def initialize_session():
+    if "farm_name" not in st.session_state:
+        st.session_state.farm_name = ""
+    if "farm_boundaries" not in st.session_state:
+        st.session_state.farm_boundaries = None
 
-# Home Page
-if page == "Home":
-    st.markdown("## 🌱 Quick Summary")
-    st.write("- Last time fertilizer was used: [Date]")
+initialize_session()
+
+def home():
+    st.title("Welcome to FERN!")
+    st.write("Quick summary of your farm:")
+    st.write("- Last time fertilizer used: [date]")
     st.write("- Anticipated rain day in X days")
 
-# My Farm Page
-elif page == "My Farm":
-    st.markdown("## 🌍 Farm Map")
-    farm_name = st.text_input("Enter your farm name:", "")
+def settings():
+    st.title("Settings")
+    st.write("### Profile Information")
+    st.write(f"**Username:** {USERNAME}")
+    st.write(f"**Password:** {'*' * len(PASSWORD)}")
+    
+    st.write("### Farm Information")
+    farm_name = st.text_input("Farm Name", st.session_state.farm_name)
+    if st.button("Save Farm Name"):
+        st.session_state.farm_name = farm_name
+        st.success("Farm name updated!")
+    
+    if st.button("Log Out"):
+        st.experimental_rerun()
+
+def my_farm():
+    st.title("My Farm")
+    
+    if not st.session_state.farm_name:
+        st.warning("Please set your farm name in Settings first.")
+        return
+    
     geolocator = Nominatim(user_agent="fertilizer_model")
+    location = geolocator.geocode(st.session_state.farm_name)
     
-    if st.button("Get Farm Location"):
-        location = geolocator.geocode(farm_name)
-        if location:
-            st.session_state.latitude = location.latitude
-            st.session_state.longitude = location.longitude
-            st.success(f"Coordinates: {location.latitude}, {location.longitude}")
-        else:
-            st.error("Could not find the farm. Try a different name.")
-    
-    if "latitude" in st.session_state and "longitude" in st.session_state:
-        latitude, longitude = st.session_state.latitude, st.session_state.longitude
-        st.write("### Set Your Farm Boundaries")
-        m = folium.Map(location=[latitude, longitude], zoom_start=12)
+    if location:
+        st.success(f"Found farm location: {location.latitude}, {location.longitude}")
+        m = folium.Map(location=[location.latitude, location.longitude], zoom_start=12)
         draw = folium.plugins.Draw(export=True)
         m.add_child(draw)
         map_data = st_folium(m, width=700, height=500)
         
-        st.write("### Draw Omitted Regions")
-        st.write("Use the map above to select areas you want to exclude from analysis.")
+        if st.button("Set Farm Boundaries"):
+            st.session_state.farm_boundaries = map_data
+            st.success("Farm boundaries saved!")
+    else:
+        st.error("Could not find farm location. Try a different name.")
 
-# Settings Page
+# Navigation buttons
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to:", ["Home", "Settings", "My Farm"])
+
+if page == "Home":
+    home()
 elif page == "Settings":
-    st.markdown("## ⚙️ Settings")
-    st.write("- Username: **fern**")
-    st.write("- Password: **soil**")
-    if st.button("Sign Out"):
-        st.success("You have signed out.")
+    settings()
+elif page == "My Farm":
+    my_farm()
