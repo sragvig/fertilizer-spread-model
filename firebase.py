@@ -1,3 +1,4 @@
+"""
 import json
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
@@ -34,3 +35,4 @@ def store_user_data(user):
         'email': user.email,
         'created_at': firestore.SERVER_TIMESTAMP
     })
+"""
