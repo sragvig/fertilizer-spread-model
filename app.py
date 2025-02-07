@@ -11,7 +11,7 @@ import asyncio
 from httpx_oauth.clients.google import GoogleOAuth2
 
 # Initialize Firebase app
-cred = credentials.Certificate("C:\Users\Sragvi\Documents\fertilizer-spread-model\fern-f1e80-firebase-adminsdk-fbsvc-e684cce0d8.json")
+cred = credentials.Certificate(r"C:\Users\Sragvi\Documents\fertilizer-spread-model\fern-f1e80-firebase-adminsdk-fbsvc-e684cce0d8.json")
 try:
     firebase_admin.get_app()
 except ValueError as e:
