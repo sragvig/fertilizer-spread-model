@@ -2,80 +2,77 @@ import streamlit as st
 import json
 import os
 
-USER_DATA_FILE = "users.json"
+def save_user_data(user_data):
+    with open("users.json", "w") as f:
+        json.dump(user_data, f)
 
 def load_user_data():
-    if os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, "r") as f:
+    if os.path.exists("users.json"):
+        with open("users.json", "r") as f:
             return json.load(f)
     return {}
 
-def save_user_data(user_data):
-    with open(USER_DATA_FILE, "w") as f:
-        json.dump(user_data, f, indent=4)
-
 def login_page():
-    st.title("Login or Sign Up")
+    st.title("Login / Sign Up")
     user_data = load_user_data()
-    
-    choice = st.radio("Select an option:", ["Login", "Sign Up"])
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     
-    if choice == "Sign Up":
+    if st.button("Sign Up"):
         if username in user_data:
-            st.warning("Username already exists. Choose a different one.")
-        elif st.button("Create Account"):
+            st.error("Username already exists")
+        else:
             user_data[username] = {"password": password, "address": ""}
             save_user_data(user_data)
-            st.session_state["logged_in"] = True
-            st.session_state["username"] = username
+            st.success("Account created. Please log in.")
             st.experimental_rerun()
     
-    elif choice == "Login":
+    if st.button("Login"):
         if username in user_data and user_data[username]["password"] == password:
             st.session_state["logged_in"] = True
             st.session_state["username"] = username
             st.experimental_rerun()
-        elif st.button("Login"):
-            st.error("Invalid credentials")
-
-def profile_page():
-    st.title("My Profile")
-    user_data = load_user_data()
-    username = st.session_state["username"]
-    
-    address = st.text_input("Enter your farm address:", user_data[username].get("address", ""))
-    if st.button("Save Address"):
-        user_data[username]["address"] = address
-        save_user_data(user_data)
-        st.success("Address saved successfully!")
+        else:
+            st.error("Invalid username or password")
 
 def home_page():
     st.title("Welcome to FERN")
-    st.write("Last time fertilizer used: Date TBD")
-    st.write("Anticipated rain day: X days")
+    st.write(f"Last time fertilizer used: {st.session_state.get('fertilizer_date', 'N/A')}")
+    st.write(f"Anticipated rain day: {st.session_state.get('rain_days', 'N/A')} days")
+
+def settings_page():
+    st.title("Settings")
+    user_data = load_user_data()
+    username = st.session_state.get("username", "")
+    
+    if username in user_data:
+        st.write(f"**Username:** {username}")
+        address = st.text_input("Address", user_data[username]["address"])
+        
+        if st.button("Save Address"):
+            user_data[username]["address"] = address
+            save_user_data(user_data)
+            st.success("Address updated!")
+        
+        if st.button("Sign Out"):
+            st.session_state.clear()
+            st.experimental_rerun()
 
 def my_farm_page():
     st.title("My Farm")
-    st.write("Map will be displayed here.")
+    st.write("Here you can draw omitted areas on your map.")
 
 def app():
     if "logged_in" not in st.session_state:
-        st.session_state["logged_in"] = False
-    
-    if not st.session_state["logged_in"]:
         login_page()
-        return
-    
-    menu = st.sidebar.selectbox("Menu", ["My Profile", "Home", "My Farm"])
-    
-    if menu == "My Profile":
-        profile_page()
-    elif menu == "Home":
-        home_page()
-    elif menu == "My Farm":
-        my_farm_page()
+    else:
+        pages = {
+            "Home": home_page,
+            "My Farm": my_farm_page,
+            "Settings": settings_page,
+        }
+        selected_page = st.sidebar.radio("Navigate", list(pages.keys()))
+        pages[selected_page]()
 
 if __name__ == "__main__":
     app()
