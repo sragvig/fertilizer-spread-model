@@ -93,7 +93,7 @@ elif st.session_state.page == "My Farm":
             st.write("### Draw Your Farm Boundary")
             m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12)
             draw = folium.plugins.Draw(
-                draw_polygon=True, draw_marker=False, draw_rectangle=False, draw_circle=False,
+                draw_polygon=False, draw_marker=False, draw_rectangle=False, draw_circle=False,
                 draw_circlemarker=False, draw_line=True, edit=True
             )
             m.add_child(draw)
@@ -102,14 +102,18 @@ elif st.session_state.page == "My Farm":
             if map_data and "all_drawings" in map_data:
                 boundary = map_data["all_drawings"]
                 if boundary:
-                    st.session_state.farm_boundary = boundary
-                    st.write("Would you like to save these farm boundaries?")
-                    if st.button("Save Boundaries"):
-                        st.session_state.setting_boundary = False
-                        st.experimental_rerun()
+                    # Check if polyline is closed by detecting if last point is close to first
+                    coords = boundary[0]['geometry']['coordinates']
+                    if len(coords) > 2 and coords[0] == coords[-1]:
+                        st.session_state.farm_boundary = boundary
+                        st.write("Would you like to save these farm boundaries?")
+                        if st.button("Save Boundaries"):
+                            st.session_state.setting_boundary = False
+                            st.experimental_rerun()
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
         st.button("Change Farm Boundaries", on_click=lambda: navigate("My Farm"))
+
