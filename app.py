@@ -33,20 +33,35 @@ def app():
     if "user_authenticated" not in st.session_state:
         st.session_state.user_authenticated = False
     
-    # Simple login form
+    # Display login or sign up screen if not authenticated
     if not st.session_state.user_authenticated:
-        st.title("Login to FERN")
+        st.title("Welcome to FERN")
+        auth_choice = st.radio("Choose an option:", ["Login", "Sign Up"])
+
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
 
-        if st.button("Login"):
-            if username == "admin" and password == "password":  # Simple hardcoded check
-                st.session_state.user_authenticated = True
-                st.session_state.username = username
-                st.success("Logged in successfully!")
-            else:
-                st.error("Invalid credentials. Please try again.")
-
+        if auth_choice == "Sign Up":
+            if st.button("Create Account"):
+                if username and password:
+                    st.session_state.user_authenticated = True
+                    st.session_state.username = username
+                    st.session_state.password = password
+                    st.success("Account created successfully! You are now logged in.")
+                else:
+                    st.error("Please enter a username and password.")
+        
+        elif auth_choice == "Login":
+            if st.button("Login"):
+                # Hardcoded login check for simplicity (you can replace it with a more complex method)
+                if username == "admin" and password == "password":
+                    st.session_state.user_authenticated = True
+                    st.session_state.username = username
+                    st.session_state.password = password
+                    st.success("Logged in successfully!")
+                else:
+                    st.error("Invalid credentials. Please try again.")
+    
     # If authenticated, show the rest of the app
     if st.session_state.user_authenticated:
         st.markdown("""
@@ -109,3 +124,4 @@ def app():
 
 if __name__ == "__main__":
     app()
+
