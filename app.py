@@ -22,9 +22,10 @@ if 'farm_boundary' not in st.session_state:
 if 'setting_boundary' not in st.session_state:
     st.session_state.setting_boundary = False
 
+# Navigation function without rerun
 def navigate(page):
     st.session_state.page = page
-    st.experimental_rerun()
+    # No need for st.experimental_rerun() here; Streamlit will automatically handle the page switch.
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -79,7 +80,7 @@ elif st.session_state.page == "My Farm":
         setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
         if setup == "Yes":
             st.session_state.setting_boundary = True
-            st.experimental_rerun()
+            navigate("My Farm")  # Directly navigate after boundary setup choice.
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
@@ -109,7 +110,7 @@ elif st.session_state.page == "My Farm":
                         st.write("Would you like to save these farm boundaries?")
                         if st.button("Save Boundaries"):
                             st.session_state.setting_boundary = False
-                            st.experimental_rerun()
+                            navigate("My Farm")  # Navigate after saving boundaries
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
