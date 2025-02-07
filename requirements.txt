@@ -5,7 +5,5 @@ matplotlib
 folium
 streamlit_folium
 geopy
-pyrebase4
-gcloud
-firebase-admin
-httpx-oauth
+firebase-admin  # ✅ Correct Firebase SDK
+
