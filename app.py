@@ -23,7 +23,6 @@ def navigate(page):
     st.experimental_rerun()
 
 # Sidebar Navigation
-st.sidebar.image("fern_logo.png", use_column_width=True)
 st.sidebar.markdown("## 🌱 Navigation")
 st.sidebar.button("🏠 Home", on_click=lambda: navigate("Home"))
 st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
