@@ -1,14 +1,13 @@
 import streamlit as st
-import json
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
-# Load Firebase credentials from Streamlit secrets
-firebase_credentials = json.loads(st.secrets["firebase_credentials"])
+# ✅ No need to parse JSON manually
+firebase_credentials = st.secrets["firebase_credentials"]
 
-# Initialize Firebase app only once to avoid re-initialization errors
+# ✅ Ensure Firebase initializes only once
 if not firebase_admin._apps:
-    cred = credentials.Certificate(firebase_credentials)
+    cred = credentials.Certificate(dict(firebase_credentials))  # Convert TOML to dict
     firebase_admin.initialize_app(cred)
 
 # Firestore database
@@ -25,15 +24,6 @@ def sign_up(email, password):
         st.error(f"Error signing up: {e}")
         return None
 
-def log_in(email, password):
-    """Firebase Admin SDK does not support login. Use Firebase Authentication API."""
-    st.warning("Login should be handled on the client side.")
-
-def log_out():
-    """Logout is managed client-side with Firebase Authentication."""
-    st.warning("Logout should be handled on the client side.")
-
-# Store User Data in Firestore
 def store_user_data(user):
     """Store user information in Firestore."""
     user_ref = db.collection('users').document(user.uid)
