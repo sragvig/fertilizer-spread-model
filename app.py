@@ -1,95 +1,101 @@
 import streamlit as st
 import json
 import os
+from geopy.geocoders import Nominatim
+import folium
+from streamlit_folium import st_folium
 
-USER_DATA_FILE = "users.json"
+USER_DATA_FILE = "user_data.json"
 
 def load_user_data():
     if os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, "r") as f:
-            return json.load(f)
+        with open(USER_DATA_FILE, "r") as file:
+            return json.load(file)
     return {}
 
-def save_user_data(user_data):
-    with open(USER_DATA_FILE, "w") as f:
-        json.dump(user_data, f)
+def save_user_data(data):
+    with open(USER_DATA_FILE, "w") as file:
+        json.dump(data, file, indent=4)
 
 def login_page():
-    st.title("🔑 Login to FERN")
-    user_data = load_user_data()
-    
-    auth_choice = st.radio("Choose an option", ["Login", "Sign Up"])
+    st.title("Login / Sign Up")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-
-    if auth_choice == "Sign Up":
-        if st.button("Create Account"):
-            if username in user_data:
-                st.error("Username already exists. Choose another.")
-            else:
-                user_data[username] = {"password": password, "address": None}  # Address will be set later
-                save_user_data(user_data)
-                st.session_state["authenticated"] = True
-                st.session_state["username"] = username
-                st.session_state["page"] = "profile_setup"
-                st.rerun()
-
-    elif auth_choice == "Login":
-        if st.button("Login"):
-            if username in user_data and user_data[username]["password"] == password:
-                st.session_state["authenticated"] = True
-                st.session_state["username"] = username
-                if user_data[username]["address"]:
-                    st.session_state["page"] = "profile"
-                else:
-                    st.session_state["page"] = "profile_setup"
-                st.success(f"Welcome back, {username}!")
-                st.rerun()
-            else:
-                st.error("Invalid username or password.")
-
-def profile_setup_page():
-    st.title("🏡 Profile Setup")
-    st.write("Please enter your address to complete your profile.")
-    
     user_data = load_user_data()
-    username = st.session_state.get("username", "")
+
+    if st.button("Login"):
+        if username in user_data and user_data[username]['password'] == password:
+            st.session_state.user = username
+            st.success("Logged in successfully!")
+            st.experimental_rerun()
+        else:
+            st.error("Invalid username or password.")
     
-    address = st.text_input("Address")
-    
-    if st.button("Save & Continue"):
+    if st.button("Sign Up"):
         if username in user_data:
-            user_data[username]["address"] = address
+            st.error("Username already exists.")
+        else:
+            user_data[username] = {"password": password, "address": "", "last_fertilizer_date": "N/A", "rain_days": "N/A"}
             save_user_data(user_data)
-            st.session_state["page"] = "profile"
-            st.success("Profile updated successfully!")
-            st.rerun()
+            st.success("Account created! Please log in.")
 
 def profile_page():
-    st.title("👤 My Profile")
+    st.title("My Profile")
     user_data = load_user_data()
-    username = st.session_state.get("username", "")
+    username = st.session_state.user
     
-    if username in user_data:
-        st.write(f"**Username:** {username}")
-        st.write(f"**Address:** {user_data[username].get('address', 'Not set')}")
-        if st.button("Logout"):
-            st.session_state.clear()
-            st.rerun()
+    st.write(f"**Username:** {username}")
+    address = st.text_input("Enter or update your address", user_data[username].get("address", ""))
+    
+    if st.button("Save Address"):
+        user_data[username]["address"] = address
+        save_user_data(user_data)
+        st.success("Address updated successfully!")
+
+def homepage():
+    st.title("Welcome to FERN 🌱")
+    user_data = load_user_data()
+    username = st.session_state.user
+    
+    last_fertilizer = user_data[username].get("last_fertilizer_date", "N/A")
+    rain_days = user_data[username].get("rain_days", "N/A")
+    
+    st.write(f"**Last Fertilizer Used:** {last_fertilizer}")
+    st.write(f"**Anticipated Rain in:** {rain_days} days")
+
+def my_farm():
+    st.title("My Farm")
+    user_data = load_user_data()
+    username = st.session_state.user
+    
+    address = user_data[username].get("address", "")
+    geolocator = Nominatim(user_agent="fern_app")
+    
+    if address:
+        location = geolocator.geocode(address)
+        if location:
+            lat, lon = location.latitude, location.longitude
+            m = folium.Map(location=[lat, lon], zoom_start=12)
+            draw = folium.plugins.Draw(export=True)
+            m.add_child(draw)
+            st_folium(m, width=700, height=500)
+        else:
+            st.error("Could not find location.")
+    else:
+        st.error("Please update your address in the profile page.")
 
 def app():
-    if "authenticated" not in st.session_state:
-        st.session_state["authenticated"] = False
-        st.session_state["page"] = "login"
-    
-    if st.session_state["page"] == "login":
+    if "user" not in st.session_state:
         login_page()
-    elif st.session_state["page"] == "profile_setup":
-        profile_setup_page()
-    elif st.session_state["page"] == "profile":
-        profile_page()
     else:
-        login_page()
+        menu = st.sidebar.selectbox("Menu", ["My Profile", "Home", "My Farm"])
+        
+        if menu == "My Profile":
+            profile_page()
+        elif menu == "Home":
+            homepage()
+        elif menu == "My Farm":
+            my_farm()
 
 if __name__ == "__main__":
     app()
