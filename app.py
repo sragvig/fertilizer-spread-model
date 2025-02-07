@@ -5,6 +5,7 @@ from streamlit_folium import st_folium
 from sklearn.linear_model import LinearRegression
 from geopy.geocoders import Nominatim
 import folium.plugins
+from firebase import sign_up, log_in, log_out
 
 # Function for the 2D convection-diffusion simulation
 def convection_diffusion_2d(D, u, v, source, mask, dt, dx, dy, T):
@@ -35,6 +36,43 @@ def predict_constants(model, inputs):
     return model.predict(inputs)
 
 # Streamlit App UI
+def login():
+    st.title("Welcome to FERN")
+    
+    menu = ["Login", "Sign Up"]
+    choice = st.sidebar.selectbox("Select Action", menu)
+
+    if choice == "Login":
+        st.subheader("Login Section")
+        email = st.text_input("Email", "")
+        password = st.text_input("Password", "", type="password")
+        
+        if st.button("Login"):
+            try:
+                user = log_in(email, password)
+                st.session_state.user = user
+                st.success("Login successful")
+                st.write(f"Welcome {email}!")
+            except:
+                st.error("Invalid email or password.")
+    
+    elif choice == "Sign Up":
+        st.subheader("Sign Up Section")
+        email = st.text_input("Email", "")
+        password = st.text_input("Password", "", type="password")
+        confirm_password = st.text_input("Confirm Password", "", type="password")
+        
+        if password == confirm_password:
+            if st.button("Sign Up"):
+                try:
+                    user = sign_up(email, password)
+                    st.success("Account created successfully")
+                except:
+                    st.error("Error during signup. Please try again.")
+        else:
+            st.warning("Passwords do not match.")
+
+# Main app functionality
 def app():
     st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
     
@@ -91,69 +129,10 @@ def app():
             st.success("Simulation completed. Check the results below.")
             st.write(result)
 
+# Main entry point
 if __name__ == "__main__":
-    app()
-import streamlit as st
-from firebase import sign_up, log_in, log_out
-
-# Streamlit UI
-def login():
-    st.title("Welcome to FERN")
-    
-    menu = ["Login", "Sign Up"]
-    choice = st.sidebar.selectbox("Select Action", menu)
-
-    if choice == "Login":
-        st.subheader("Login Section")
-        email = st.text_input("Email", "")
-        password = st.text_input("Password", "", type="password")
-        
-        if st.button("Login"):
-            try:
-                user = log_in(email, password)
-                st.session_state.user = user
-                st.success("Login successful")
-                st.write(f"Welcome {email}!")
-            except:
-                st.error("Invalid email or password.")
-    
-    elif choice == "Sign Up":
-        st.subheader("Sign Up Section")
-        email = st.text_input("Email", "")
-        password = st.text_input("Password", "", type="password")
-        confirm_password = st.text_input("Confirm Password", "", type="password")
-        
-        if password == confirm_password:
-            if st.button("Sign Up"):
-                try:
-                    user = sign_up(email, password)
-                    st.success("Account created successfully")
-                except:
-                    st.error("Error during signup. Please try again.")
-        else:
-            st.warning("Passwords do not match.")
-
-# Main app functionality
-def app():
     if "user" in st.session_state:
-        st.title(f"Welcome to FERN, {st.session_state.user['email']}!")
-        # Add your simulation functionality here
-        st.write("You are logged in!")
+        app()  # Run main app
     else:
-        login()
-
-if __name__ == "__main__":
-    app()
-from firebase_admin import firestore
-
-# Initialize Firestore
-db = firestore.client()
-
-# Store user data in Firestore after signup
-def store_user_data(user):
-    user_ref = db.collection('users').document(user['localId'])
-    user_ref.set({
-        'email': user['email'],
-        'created_at': firestore.SERVER_TIMESTAMP
-    })
+        login()  # Show login page
 
