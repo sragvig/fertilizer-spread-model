@@ -93,6 +93,8 @@ elif st.session_state.page == "My Farm":
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
             m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12)
+            
+            # Correctly configuring the Draw plugin to allow polyline drawing
             draw = folium.plugins.Draw(
                 draw_polygon=False, draw_marker=False, draw_rectangle=False, draw_circle=False,
                 draw_circlemarker=False, draw_line=True, edit=True
@@ -114,6 +116,10 @@ elif st.session_state.page == "My Farm":
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
+    if st.session_state.farm_boundary:
+        st.success("Farm boundaries saved successfully!")
+        st.button("Change Farm Boundaries", on_click=lambda: navigate("My Farm"))
+
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
         st.button("Change Farm Boundaries", on_click=lambda: navigate("My Farm"))
