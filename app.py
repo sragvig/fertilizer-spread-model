@@ -11,6 +11,8 @@ from scipy.integrate import odeint
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
 # Initialize session state variables
+if 'username' not in st.session_state:
+    st.session_state.username = "fern"  # Default username
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = "My Farm"
 if 'address' not in st.session_state:
