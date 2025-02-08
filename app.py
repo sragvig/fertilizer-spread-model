@@ -9,9 +9,9 @@ st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
 # Initialize session state variables
 if 'farm_name' not in st.session_state:
-    st.session_state.farm_name = ""
+    st.session_state.farm_name = "Hamza Farm"
 if 'address' not in st.session_state:
-    st.session_state.address = ""
+    st.session_state.address = "9022 Puritan Way"
 if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
     st.session_state.latitude = None
     st.session_state.longitude = None
@@ -194,8 +194,10 @@ elif st.session_state.page == "Settings":
         st.text_input("Password", "soil", type="default", disabled=True)
     
     st.write("### Farm Information")
-    farm_name = st.text_input("Farm Name", st.session_state.farm_name)
-    address = st.text_input("Farm Address", st.session_state.address)
+    # Set default values for farm name and address if not set
+    farm_name = st.text_input("Farm Name", st.session_state.farm_name or "Hamza Farm")
+    address = st.text_input("Farm Address", st.session_state.address or "9022 Puritan Way")
+    
     if st.button("Save Changes"):
         st.session_state.farm_name = farm_name
         st.session_state.address = address
