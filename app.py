@@ -88,23 +88,20 @@ elif st.session_state.page == "My Farm":
     else:
         # Display saved farm boundary on a map
         st.write("### Your Farm Map")
-        if st.session_state.latitude and st.session_state.longitude:
-            m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=15,
-                           tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-                           attr="Google")
-            for shape in st.session_state.farm_boundary:
-                if shape['geometry']['type'] == 'Polygon':
-                    folium.Polygon(
-                        locations=shape['geometry']['coordinates'][0],
-                        color="blue",
-                        fill=True,
-                        fill_color="blue",
-                        fill_opacity=0.2
-                    ).add_to(m)
-            folium_static(m)
-        else:
-            st.warning("Farm location not set. Please set the farm address in Settings.")
-    
+        m = folium.Map(location=[0, 0], zoom_start=2,
+                       tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+                       attr="Google")
+        for shape in st.session_state.farm_boundary:
+            if shape['geometry']['type'] == 'Polygon':
+                folium.Polygon(
+                    locations=shape['geometry']['coordinates'][0],
+                    color="blue",
+                    fill=True,
+                    fill_color="blue",
+                    fill_opacity=0.2
+                ).add_to(m)
+        folium_static(m)
+
     # Fertilizer Runoff Predictor (Below Map)
     st.write("### Fertilizer Runoff Predictor")
     
@@ -200,4 +197,6 @@ elif st.session_state.page == "Settings":
             st.session_state.longitude = longitude_result
             st.session_state.farm_name = farm_name_input
             st.session_state.address = address_input
-           
+            st.success("Farm location updated successfully!")
+        else:
+            st.warning("Could not find the location. Please enter a valid address.")
