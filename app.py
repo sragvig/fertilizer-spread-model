@@ -64,6 +64,8 @@ if st.session_state.get('page', 'Home') == "Home":
     st.title("Welcome to FERN")
     st.write("Your Personalized Farm Management System.")
     st.write(f"**Farm Name:** {st.session_state.farm_name}")
+    st.write(f"**Username:** {st.session_state.username}")
+    st.write(f"**Password:** {st.session_state.password}")
 
 # My Farm Page
 elif st.session_state.page == "My Farm":
@@ -97,37 +99,11 @@ elif st.session_state.page == "My Farm":
                     fill_opacity=0.2
                 ).add_to(m)
         folium_static(m)
-    
-    st.write("### Fertilizer Runoff Predictor")
-    
-    fertilizer_choices = ["Select", "Urea", "NPK", "Compost", "Ammonium Nitrate"]
-    fertilizer_type = st.selectbox("Select Fertilizer Type", fertilizer_choices)
-    fertilizer_amount = st.number_input("Amount of Fertilizer Used (kg)", min_value=0.0, step=0.1)
-    
-    crop_choices = ["Select", "Rice", "Wheat", "Corn", "Soybeans", "Other"]
-    crop_type = st.selectbox("Type of Crop Planted", crop_choices)
-    
-    soil_npk_ratio = st.text_input("Soil NPK Ratio (e.g., 15-15-15)")
-    land_size = st.number_input("Land Size (hectares)", min_value=0.1, step=0.1)
-
-    if st.button("Run Simulation"):
-        if fertilizer_type == "Select" or crop_type == "Select" or not soil_npk_ratio or land_size <= 0:
-            st.error("Please fill in all fields before running the simulation.")
-        else:
-            simulation_days = 30
-            time_points, concentration = generate_sample_data(simulation_days, fertilizer_amount, land_size)
-            df_concentration = pd.DataFrame({'Time (hours)': time_points, 'Concentration (ppm)': concentration})
-            st.line_chart(df_concentration.set_index('Time (hours)'))
 
 # Settings Page
 elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
+    st.write(f"**Username:** {st.session_state.username}")
+    st.write(f"**Password:** {st.session_state.password}")
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
-    
-    if address_input and farm_name_input:
-        geolocator = Nominatim(user_agent="farm_locator")
-        location_result = geolocator.geocode(address_input)
-        if location_result:
-            st.session_state.latitude = location_result.latitude
-            st.session_state.longitude = location_result.longitude
