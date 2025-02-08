@@ -57,13 +57,15 @@ if st.session_state.page == "My Farm":
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
 
-            # Satellite map with zoom and polyline only
+            # Satellite map with attribution
             m = folium.Map(
                 location=[st.session_state.latitude, st.session_state.longitude],
-                zoom_start=15,
-                tiles="Stamen Terrain"
+                zoom_start=15
             )
-            folium.TileLayer("Esri.WorldImagery").add_to(m)  # Satellite imagery
+            folium.TileLayer(
+                tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                attr="Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+            ).add_to(m)
 
             draw = folium.plugins.Draw(
                 export=True,
