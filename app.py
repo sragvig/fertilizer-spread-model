@@ -112,7 +112,7 @@ elif st.session_state.page == "My Farm":
     else:
         # Display saved farm boundary on a map
         st.write("### Your Farm Map")
-        m = folium.Map(location=[0, 0], zoom_start=4,
+        m = folium.Map(location=st.session_state.farm_boundary[0][0], zoom_start=16,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
         for sbounds in st.session_state.farm_boundary:
