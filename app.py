@@ -193,4 +193,4 @@ elif st.session_state.page == "My Farm":
         m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", attr="Google")
         folium.Polygon(
-            locations=[point[1] for point in]
+            locations=[point[1] for point in st.session_state.farm_boundary[0]["geometry
