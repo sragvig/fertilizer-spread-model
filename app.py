@@ -54,7 +54,7 @@ elif st.session_state.page == "My Farm":
     
     if not st.session_state.setting_boundary:
         st.write("Would you like to set up your farm boundaries?")
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([0.2, 0.2])
         with col1:
             if st.button("Yes"):
                 st.session_state.setting_boundary = True
@@ -62,6 +62,7 @@ elif st.session_state.page == "My Farm":
         with col2:
             if st.button("No"):
                 st.session_state.setting_boundary = False
+                st.rerun()
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
@@ -84,12 +85,40 @@ elif st.session_state.page == "My Farm":
                 tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                 attr="Google"
             )
-            Draw(export=True).add_to(m)
+
+            draw = Draw(
+                draw_options={
+                    "polyline": {
+                        "shapeOptions": {"color": "red"},
+                        "metric": False,
+                        "repeatMode": False,
+                        "guidelineDistance": 10,
+                        "showLength": False
+                    },
+                    "polygon": {
+                        "allowIntersection": False,
+                        "drawError": {"color": "orange", "message": "Click Finish to close the shape"},
+                        "shapeOptions": {"color": "blue"},
+                        "metric": False
+                    },
+                    "circle": False,
+                    "rectangle": False,
+                    "marker": False,
+                    "circlemarker": False
+                },
+                edit_options={"remove": True}
+            )
+            
+            m.add_child(draw)
             map_data = st_folium(m, width=700, height=500)
             
             if map_data and "all_drawings" in map_data:
                 boundary = map_data["all_drawings"]
                 if boundary:
+                    # Automatically close the shape if it is a polyline
+                    if boundary[-1]["type"] == "polyline":
+                        boundary[-1]["geometry"]["coordinates"].append(boundary[-1]["geometry"]["coordinates"][0])
+
                     st.session_state.farm_boundary = boundary
                     st.write("Would you like to save these farm boundaries?")
                     if st.button("Save Boundaries"):
@@ -104,9 +133,7 @@ elif st.session_state.page == "My Farm":
 
 # Settings Page
 elif st.session_state.page == "Settings":
-    st.markdown("""
-        <h2 style="color: #228B22;">⚙️ Settings</h2>
-    """, unsafe_allow_html=True)
+    st.markdown("""<h2 style="color: #228B22;">⚙️ Settings</h2>""", unsafe_allow_html=True)
     
     st.write("### Profile Information")
     st.text_input("Username", "fern", disabled=True)
