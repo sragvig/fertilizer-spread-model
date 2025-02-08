@@ -24,6 +24,8 @@ if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
     st.session_state.longitude = None
 if 'farm_boundary' not in st.session_state:
     st.session_state.farm_boundary = None
+if 'finalize_boundaries' not in st.session_state:
+    st.session_state.finalize_boundaries = False
 if 'fertilizer_type' not in st.session_state:
     st.session_state.fertilizer_type = None
 if 'fertilizer_amount' not in st.session_state:
@@ -73,7 +75,16 @@ elif st.session_state.page == "My Farm":
 
         if map_data and "all_drawings" in map_data:
             st.session_state.farm_boundary = map_data["all_drawings"]
-            st.success("Farm boundaries saved successfully!")
+            st.session_state.finalize_boundaries = False  # Reset until user finalizes
+            st.write("Once you're satisfied with your boundary, click 'Finalize'.")
+        
+        # Button to finalize the boundary
+        if st.button("Finalize Boundaries"):
+            if st.session_state.farm_boundary:
+                st.session_state.finalize_boundaries = True
+                st.success("Farm boundaries saved successfully!")
+            else:
+                st.warning("Please draw your farm boundary first.")
     else:
         st.write("### Your Farm Map")
         m = folium.Map(location=map_location, zoom_start=12,
@@ -89,6 +100,9 @@ elif st.session_state.page == "My Farm":
                     fill_opacity=0.2
                 ).add_to(m)
         folium_static(m)
+
+        if st.session_state.finalize_boundaries:
+            st.success("Farm boundaries saved successfully!")
 
 # Settings Page
 elif st.session_state.page == "Settings":
