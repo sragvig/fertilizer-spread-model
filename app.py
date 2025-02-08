@@ -10,6 +10,10 @@ from scipy.integrate import odeint
 # Set Streamlit page config
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
+# Ensure username and password persist across refreshes
+st.session_state.username = "fern"
+st.session_state.password = "soil"
+
 # Initialize session state variables
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = "My Farm"
@@ -29,7 +33,7 @@ if 'crop_type' not in st.session_state:
 if 'soil_npk_ratio' not in st.session_state:
     st.session_state.soil_npk_ratio = None
 
-# Helper functions from your original code
+# Helper functions
 def solve_pde(initial_concentration, time_points, D, v, R, S):
     def dC_dt(C, t):
         dC = D * np.gradient(np.gradient(C)) - v * np.gradient(C) - R * C + S
@@ -61,11 +65,10 @@ if st.session_state.get('page', 'Home') == "Home":
     st.write("Your Personalized Farm Management System.")
     st.write(f"**Farm Name:** {st.session_state.farm_name}")
 
-# My Farm Page (Google Maps + Fertilizer Predictor)
+# My Farm Page
 elif st.session_state.page == "My Farm":
     st.title(f"🌍 {st.session_state.farm_name}")
     
-    # Farm Boundary Setup with Folium Map
     if not st.session_state.farm_boundary:
         st.write("### Draw Your Farm Boundary")
         m = folium.Map(location=[0, 0], zoom_start=2,
@@ -80,7 +83,6 @@ elif st.session_state.page == "My Farm":
             st.session_state.farm_boundary = map_data["all_drawings"]
             st.success("Farm boundaries saved successfully!")
     else:
-        # Display saved farm boundary on a map
         st.write("### Your Farm Map")
         m = folium.Map(location=[0, 0], zoom_start=2,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
@@ -95,11 +97,9 @@ elif st.session_state.page == "My Farm":
                     fill_opacity=0.2
                 ).add_to(m)
         folium_static(m)
-
-    # Fertilizer Runoff Predictor (Below Map)
+    
     st.write("### Fertilizer Runoff Predictor")
     
-    # User Inputs for Fertilizer Predictor
     fertilizer_choices = ["Select", "Urea", "NPK", "Compost", "Ammonium Nitrate"]
     fertilizer_type = st.selectbox("Select Fertilizer Type", fertilizer_choices)
     fertilizer_amount = st.number_input("Amount of Fertilizer Used (kg)", min_value=0.0, step=0.1)
@@ -108,7 +108,6 @@ elif st.session_state.page == "My Farm":
     crop_type = st.selectbox("Type of Crop Planted", crop_choices)
     
     soil_npk_ratio = st.text_input("Soil NPK Ratio (e.g., 15-15-15)")
-    
     land_size = st.number_input("Land Size (hectares)", min_value=0.1, step=0.1)
 
     if st.button("Run Simulation"):
@@ -117,52 +116,18 @@ elif st.session_state.page == "My Farm":
         else:
             simulation_days = 30
             time_points, concentration = generate_sample_data(simulation_days, fertilizer_amount, land_size)
-
-            # Concentration vs Time Chart
-            df_concentration = pd.DataFrame({
-                'Time (hours)': time_points,
-                'Concentration (ppm)': concentration
-            })
+            df_concentration = pd.DataFrame({'Time (hours)': time_points, 'Concentration (ppm)': concentration})
             st.line_chart(df_concentration.set_index('Time (hours)'))
 
-            # Safety Analysis Metrics
-            safe_level = 50
-            peak_concentration = max(concentration)
-            total_runoff = np.trapz(concentration, time_points)
-            unsafe_hours = len(time_points[concentration > safe_level])
-
-            cols = st.columns(3)
-            with cols[0]:
-                st.metric(label="Peak Concentration",
-                          value=f"{peak_concentration:.2f} ppm",
-                          delta=f"{peak_concentration - safe_level:.2f} ppm above safe level"
-                          if peak_concentration > safe_level else "Within safe levels",
-                          delta_color="inverse")
-            with cols[1]:
-                st.metric(label="Time to Safe Level",
-                          value=f"{unsafe_hours} hours")
-            with cols[2]:
-                st.metric(label="Total Runoff",
-                          value=f"{total_runoff:.2f} ppm·hrs")
-
-# Settings Page (Restored Features)
+# Settings Page
 elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
-    
-    # User Inputs for Settings Page: Address and Geocoding Features Restored
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
-    
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
     
-    if address_input and farm_name_input != "":
+    if address_input and farm_name_input:
         geolocator = Nominatim(user_agent="farm_locator")
         location_result = geolocator.geocode(address_input)
-
-        if location_result is not None:
-            latitude_result = location_result.latitude
-            longitude_result = location_result.longitude
-            
-            # Save to session state variables.
-            if farm_name_input != "":
-                latitude_result 
-
+        if location_result:
+            st.session_state.latitude = location_result.latitude
+            st.session_state.longitude = location_result.longitude
