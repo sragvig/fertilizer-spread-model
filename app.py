@@ -33,7 +33,7 @@ if 'crop_type' not in st.session_state:
 if 'soil_npk_ratio' not in st.session_state:
     st.session_state.soil_npk_ratio = None
 
-# Helper functions for the Fertilizer Runoff Predictor
+# Helper functions for Fertilizer Runoff Predictor
 def solve_pde(initial_concentration, time_points, D, v, R, S):
     def dC_dt(C, t):
         dC = D * np.gradient(np.gradient(C)) - v * np.gradient(C) - R * C + S
@@ -50,6 +50,7 @@ def generate_sample_data(days, fertilizer_amount, land_size):
     concentration = solve_pde(initial_concentration, time_points, D, v, R, S)
     return time_points, concentration[:, 0]
 
+# Navigation function
 def navigate(page):
     st.session_state.page = page
     st.rerun()
@@ -69,7 +70,7 @@ if st.session_state.get('page', 'Home') == "Home":
     password_hidden = "•" * len(st.session_state.password)
     st.write(f"**Password:** {password_hidden}")
 
-# My Farm Page
+# My Farm Page (Google Maps + Fertilizer Predictor)
 elif st.session_state.page == "My Farm":
     st.title(f"🌍 {st.session_state.farm_name}")
     
@@ -104,7 +105,7 @@ elif st.session_state.page == "My Farm":
                 ).add_to(m)
         folium_static(m)
 
-    # Fertilizer Runoff Predictor
+    # Fertilizer Runoff Predictor (Below Map)
     st.write("### Fertilizer Runoff Predictor")
     
     # User Inputs for Fertilizer Predictor
@@ -153,10 +154,11 @@ elif st.session_state.page == "My Farm":
                 st.metric(label="Total Runoff",
                           value=f"{total_runoff:.2f} ppm·hrs")
 
-# Settings Page
+# Settings Page (Restored Features)
 elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
     
+    # User Inputs for Settings Page: Address and Geocoding Features Restored
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
@@ -170,11 +172,10 @@ elif st.session_state.page == "Settings":
             longitude_result = location_result.longitude
             
             # Save to session state variables.
-            if farm_name_input != "":
-                st.session_state.farm_name = farm_name_input
-                st.session_state.address = address_input
-                st.session_state.latitude = latitude_result
-                st.session_state.longitude = longitude_result
-                st.success("Farm location updated successfully!")
+            st.session_state.latitude = latitude_result
+            st.session_state.longitude = longitude_result
+            st.session_state.farm_name = farm_name_input
+            st.session_state.address = address_input
+            st.success("Farm location updated successfully!")
         else:
             st.warning("Could not find the location. Please enter a valid address.")
