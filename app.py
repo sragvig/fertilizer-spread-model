@@ -208,4 +208,5 @@ elif st.session_state.page == "Settings":
     
     st.write("### Profile Information")
     st.text_input("Username", "fern", disabled=True)
-    password = st.text_input("Password",
+    password = st.text_input("Password", value="soil", type="password")  # Fixed parentheses here.
+    st
