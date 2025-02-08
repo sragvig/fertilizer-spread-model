@@ -150,6 +150,8 @@ elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
     
     # User Inputs for Settings Page: Address and Geocoding Features Restored
+    username_input = st.text_input("Username:", value=st.session_state.username)
+
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
