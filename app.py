@@ -3,12 +3,11 @@ import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 import folium.plugins
-import json
 
 # Streamlit App UI
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
-# Initialize session state if not already set
+# Initialize session state
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = ""
 if 'address' not in st.session_state:
@@ -23,10 +22,9 @@ if 'farm_boundary' not in st.session_state:
 if 'setting_boundary' not in st.session_state:
     st.session_state.setting_boundary = False
 
-# Function to navigate pages
 def navigate(page):
     st.session_state.page = page
-    st.experimental_rerun()
+    st.rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -39,8 +37,6 @@ if st.session_state.page == "Home":
     st.markdown("""
         <h1 style="text-align: center; color: #228B22;">Welcome to FERN</h1>
         <h3 style="text-align: center; color: #2E8B57;">Your Personalized Farm Management System</h3>
-        <p style="text-align: center; color: #2F4F4F; font-size: 1.1em;">
-        Keep track of your farm, fertilizer use, and environmental impact.</p>
     """, unsafe_allow_html=True)
     
     st.write("### Quick Farm Summary")
@@ -50,9 +46,7 @@ if st.session_state.page == "Home":
 
 # Settings Page
 elif st.session_state.page == "Settings":
-    st.markdown("""
-        <h2 style="color: #228B22;">⚙️ Settings</h2>
-    """, unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #228B22;'>⚙️ Settings</h2>", unsafe_allow_html=True)
     
     st.write("### Profile Information")
     st.text_input("Username", "fern", disabled=True)
@@ -81,22 +75,22 @@ elif st.session_state.page == "My Farm":
         setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
         if setup == "Yes":
             st.session_state.setting_boundary = True
-            st.experimental_rerun()
+            st.rerun()
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
             geolocator = Nominatim(user_agent="fern_farm_locator")
             try:
-                location = geolocator.geocode(st.session_state.address, timeout=10)
+                location = geolocator.geocode(st.session_state.address)
                 if location:
                     st.session_state.latitude = location.latitude
                     st.session_state.longitude = location.longitude
             except:
-                st.warning("Geocoding service is unavailable. Please check your internet connection or try again later.")
+                st.warning("Geolocation service unavailable. Please enter coordinates manually.")
         
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
-            m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12, tiles="OpenStreetMap")
+            m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12, tiles="Satellite")
             draw = folium.plugins.Draw(
                 draw_polygon=True, draw_marker=False, draw_rectangle=False, draw_circle=False,
                 draw_circlemarker=False, draw_line=True, edit=True
@@ -107,18 +101,11 @@ elif st.session_state.page == "My Farm":
             if map_data and "all_drawings" in map_data:
                 boundary = map_data["all_drawings"]
                 if boundary:
-                    coordinates = boundary[-1]['geometry']['coordinates'][0]
-                    if len(coordinates) > 2:
-                        first_point = coordinates[0]
-                        last_point = coordinates[-1]
-                        distance = ((first_point[0] - last_point[0])**2 + (first_point[1] - last_point[1])**2) ** 0.5
-                        if distance < 0.0001:  # If close enough, close the shape
-                            coordinates.append(first_point)
-                            st.session_state.farm_boundary = coordinates
-                            st.write("Would you like to save these farm boundaries?")
-                            if st.button("Save Boundaries"):
-                                st.session_state.setting_boundary = False
-                                st.experimental_rerun()
+                    st.session_state.farm_boundary = boundary
+                    st.write("Would you like to save these farm boundaries?")
+                    if st.button("Save Boundaries"):
+                        st.session_state.setting_boundary = False
+                        st.rerun()
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
