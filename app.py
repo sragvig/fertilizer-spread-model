@@ -113,16 +113,16 @@ elif st.session_state.page == "My Farm":
                 rectangles = []
                 
                 for shape in map_data["all_drawings"]:
-                    # Check if the shape is a GeoJSON Feature
+                    # check if the shape is a Feature
                     if shape["type"] == "Feature":
                         geometry = shape.get("geometry", {})
                         if geometry.get("type") == "Polygon":
                             coordinates = geometry.get("coordinates", [])
 
-                            # Folium Draw plugin stores rectangles as polygons with 5 points (closed loop)
+                            # store rectangles as polygons with 5 points (closed loop)
                             if len(coordinates) > 0 and len(coordinates[0]) == 5:
-                                # Extract the SW (bottom-left) and NE (top-right) bounds
-                                latitudes = [point[1] for point in coordinates[0]]  # [lon, lat] format
+                                # extract the SW (bottom-left) and NE (top-right) bounds
+                                latitudes = [point[1] for point in coordinates[0]]  # [long, lat] format
                                 longitudes = [point[0] for point in coordinates[0]]
 
                                 sw = [min(latitudes), min(longitudes)]  # Bottom-left corner
@@ -199,6 +199,8 @@ elif st.session_state.page == "My Farm":
         if fertilizer_type == "Select" or crop_type == "Select" or not soil_type_input:
             st.error("Please fill in all fields before running the simulation.")
         else:
+            land_size = (st.session_state.farm_boundary[0][1][0] - st.session_state.farm_boundary[0][0][0]) * (st.session_state.farm_boundary[0][1][1] - st.session_state.farm_boundary[0][0][1])
+            print("land size " + str(land_size))
             simulation_days = 30
             time_points, concentration = generate_sample_data(simulation_days, fertilizer_amount, land_size)
 
