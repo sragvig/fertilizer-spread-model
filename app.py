@@ -53,10 +53,15 @@ elif st.session_state.page == "My Farm":
     """, unsafe_allow_html=True)
     
     if not st.session_state.setting_boundary:
-        setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
-        if setup == "Yes":
-            st.session_state.setting_boundary = True
-            st.rerun()
+        st.write("Would you like to set up your farm boundaries?")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Yes"):
+                st.session_state.setting_boundary = True
+                st.rerun()
+        with col2:
+            if st.button("No"):
+                st.session_state.setting_boundary = False
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
@@ -68,7 +73,7 @@ elif st.session_state.page == "My Farm":
                     st.session_state.longitude = location.longitude
                 else:
                     st.warning("Could not find the location. Please enter a valid address.")
-            except Exception:
+            except Exception as e:
                 st.error("Geocoding service unavailable. Try again later.")
         
         if st.session_state.latitude and st.session_state.longitude:
