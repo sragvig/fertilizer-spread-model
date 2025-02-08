@@ -208,4 +208,4 @@ elif st.session_state.page == "My Farm":
         if st.session_state.marked_areas:
             st.write("Marked regions for exclusion:")
             for area in st.session_state.marked_areas:
-                st.write(f"Area
+                st.write(f"Area: {area}") 
