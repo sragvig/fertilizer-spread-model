@@ -7,7 +7,7 @@ import folium.plugins
 # Streamlit App UI
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
-# Initialize session state if not already set
+# Initialize session state
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = ""
 if 'address' not in st.session_state:
@@ -24,7 +24,7 @@ if 'setting_boundary' not in st.session_state:
 
 def navigate(page):
     st.session_state.page = page
-    st.experimental_rerun()
+    st.rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -37,8 +37,6 @@ if st.session_state.page == "Home":
     st.markdown("""
         <h1 style="text-align: center; color: #228B22;">Welcome to FERN</h1>
         <h3 style="text-align: center; color: #2E8B57;">Your Personalized Farm Management System</h3>
-        <p style="text-align: center; color: #2F4F4F; font-size: 1.1em;">
-        Keep track of your farm, fertilizer use, and environmental impact.</p>
     """, unsafe_allow_html=True)
     
     st.write("### Quick Farm Summary")
@@ -48,9 +46,7 @@ if st.session_state.page == "Home":
 
 # Settings Page
 elif st.session_state.page == "Settings":
-    st.markdown("""
-        <h2 style="color: #228B22;">⚙️ Settings</h2>
-    """, unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #228B22;'>⚙️ Settings</h2>", unsafe_allow_html=True)
     
     st.write("### Profile Information")
     st.text_input("Username", "fern", disabled=True)
@@ -79,7 +75,7 @@ elif st.session_state.page == "My Farm":
         setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
         if setup == "Yes":
             st.session_state.setting_boundary = True
-            st.experimental_rerun()
+            st.rerun()
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
@@ -90,14 +86,14 @@ elif st.session_state.page == "My Farm":
                     st.session_state.latitude = location.latitude
                     st.session_state.longitude = location.longitude
             except:
-                st.warning("Geocoding service unavailable. Please try again later.")
+                st.warning("Geolocation service unavailable. Please enter coordinates manually.")
         
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
-            m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12, tiles='Satellite')
+            m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12, tiles="Satellite")
             draw = folium.plugins.Draw(
                 draw_polygon=True, draw_marker=False, draw_rectangle=False, draw_circle=False,
-                draw_circlemarker=False, draw_polyline=True, edit=True
+                draw_circlemarker=False, draw_line=True, edit=True
             )
             m.add_child(draw)
             map_data = st_folium(m, width=700, height=500)
@@ -105,15 +101,11 @@ elif st.session_state.page == "My Farm":
             if map_data and "all_drawings" in map_data:
                 boundary = map_data["all_drawings"]
                 if boundary:
-                    # Ensure shape closure when clicking the first point
-                    first_point = boundary[0]['geometry']['coordinates'][0]
-                    last_point = boundary[0]['geometry']['coordinates'][-1]
-                    if first_point == last_point:
-                        st.session_state.farm_boundary = boundary
-                        st.write("Would you like to save these farm boundaries?")
-                        if st.button("Save Boundaries"):
-                            st.session_state.setting_boundary = False
-                            st.experimental_rerun()
+                    st.session_state.farm_boundary = boundary
+                    st.write("Would you like to save these farm boundaries?")
+                    if st.button("Save Boundaries"):
+                        st.session_state.setting_boundary = False
+                        st.rerun()
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
