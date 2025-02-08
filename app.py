@@ -19,6 +19,8 @@ if 'farm_boundary' not in st.session_state:
     st.session_state.farm_boundary = None
 if 'setting_boundary' not in st.session_state:
     st.session_state.setting_boundary = False
+if 'temp_boundary' not in st.session_state:
+    st.session_state.temp_boundary = None
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
@@ -52,7 +54,7 @@ elif st.session_state.page == "My Farm":
         <h2 style="color: #228B22;">🌍 {st.session_state.farm_name if st.session_state.farm_name else 'My Farm'}</h2>
     """, unsafe_allow_html=True)
     
-    if not st.session_state.setting_boundary:
+    if not st.session_state.setting_boundary and not st.session_state.farm_boundary:
         st.write("Would you like to set up your farm boundaries?")
         col1, col2 = st.columns([0.2, 0.2])
         with col1:
@@ -92,7 +94,6 @@ elif st.session_state.page == "My Farm":
                         "shapeOptions": {"color": "red"},
                         "metric": False,
                         "repeatMode": False,
-                        "guidelineDistance": 10,
                         "showLength": False
                     },
                     "polygon": {
@@ -111,25 +112,36 @@ elif st.session_state.page == "My Farm":
             
             m.add_child(draw)
             map_data = st_folium(m, width=700, height=500)
-            
+
             if map_data and "all_drawings" in map_data:
                 boundary = map_data["all_drawings"]
                 if boundary:
-                    # Automatically close the shape if it is a polyline
+                    # Ensure the polyline is closed when user clicks "Finish"
                     if boundary[-1]["type"] == "polyline":
                         boundary[-1]["geometry"]["coordinates"].append(boundary[-1]["geometry"]["coordinates"][0])
 
-                    st.session_state.farm_boundary = boundary
-                    st.write("Would you like to save these farm boundaries?")
-                    if st.button("Save Boundaries"):
-                        st.session_state.setting_boundary = False
-                        st.rerun()
-        else:
-            st.warning("Please set your farm address in Settings to display the map.")
-    
+                    st.session_state.temp_boundary = boundary
+
+        if st.session_state.temp_boundary:
+            st.write("Would you like to save these farm boundaries?")
+            col1, col2 = st.columns([0.4, 0.4])
+            with col1:
+                if st.button("Save Boundaries"):
+                    st.session_state.farm_boundary = st.session_state.temp_boundary
+                    st.session_state.setting_boundary = False
+                    st.session_state.temp_boundary = None
+                    st.rerun()
+            with col2:
+                if st.button("Reset Boundaries"):
+                    st.session_state.temp_boundary = None
+                    st.rerun()
+
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
-        st.button("Change Farm Boundaries", on_click=lambda: navigate("My Farm"))
+        if st.button("Change Farm Boundaries"):
+            st.session_state.farm_boundary = None
+            st.session_state.setting_boundary = True
+            st.rerun()
 
 # Settings Page
 elif st.session_state.page == "Settings":
