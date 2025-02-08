@@ -20,8 +20,6 @@ if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
     st.session_state.longitude = None
 if 'farm_boundary' not in st.session_state:
     st.session_state.farm_boundary = None
-if 'marked_areas' not in st.session_state:
-    st.session_state.marked_areas = []
 if 'fertilizer_type' not in st.session_state:
     st.session_state.fertilizer_type = None
 if 'fertilizer_amount' not in st.session_state:
@@ -50,7 +48,6 @@ def generate_sample_data(days, fertilizer_amount, land_size):
 
 def navigate(page):
     st.session_state.page = page
-    st.rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -82,9 +79,8 @@ elif st.session_state.page == "My Farm":
         if map_data and "all_drawings" in map_data:
             st.session_state.farm_boundary = map_data["all_drawings"]
             st.success("Farm boundaries saved successfully!")
-            st.experimental_rerun()
-
-    if st.session_state.farm_boundary:
+    else:
+        # Display saved farm boundary on a map
         st.write("### Your Farm Map")
         m = folium.Map(location=[0, 0], zoom_start=2,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
@@ -168,4 +164,4 @@ elif st.session_state.page == "Settings":
             
             # Save to session state variables.
             if farm_name_input != "":
-                latitude_result
+                latitude_result 
