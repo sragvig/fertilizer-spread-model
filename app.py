@@ -170,15 +170,11 @@ elif st.session_state.page == "My Farm":
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
 
-        # Extract coordinates from the boundary
-        coordinates = [point['geometry']['coordinates'] for point in st.session_state.farm_boundary[0]['geometry']['coordinates']]
-
-        # Create and display the map with the farm boundary polygon
+        # Display the saved farm boundaries
         m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", attr="Google")
-        
         folium.Polygon(
-            locations=coordinates, 
+            locations=[point[1] for point in st.session_state.farm_boundary[0]['geometry']['coordinates']],
             color="blue", fill=True, fill_color="blue", fill_opacity=0.2
         ).add_to(m)
 
