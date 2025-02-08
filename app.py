@@ -23,20 +23,14 @@ if 'temp_boundary' not in st.session_state:
     st.session_state.temp_boundary = None
 if 'marked_areas' not in st.session_state:
     st.session_state.marked_areas = []
-if 'fertilizer_type' not in st.session_state:
-    st.session_state.fertilizer_type = None
-if 'fertilizer_amount' not in st.session_state:
-    st.session_state.fertilizer_amount = None
-if 'crop_type' not in st.session_state:
-    st.session_state.crop_type = None
-if 'crop_amount' not in st.session_state:
-    st.session_state.crop_amount = None
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
+if 'fertilizer_info' not in st.session_state:
+    st.session_state.fertilizer_info = {}
 
 def navigate(page):
     st.session_state.page = page
-    st.rerun()
+    st.experimental_rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -64,39 +58,18 @@ elif st.session_state.page == "My Farm":
         <h2 style="color: #228B22;">🌍 {st.session_state.farm_name if st.session_state.farm_name else 'My Farm'}</h2>
     """, unsafe_allow_html=True)
     
-    # Fertilizer and Crop Info Section
-    st.write("### Fertilizer and Crop Info")
-
-    # Fertilizer Choice Dropdown
-    fertilizer_choices = ["Select", "Urea", "NPK", "Compost", "Ammonium Nitrate"]
-    fertilizer = st.selectbox("Select Fertilizer Type", fertilizer_choices)
-    amount_fertilizer = st.number_input("Amount of Fertilizer Used (kg)", min_value=0.0, step=0.1)
-
-    # Crop Info
-    crop = st.text_input("Type of Crop Planted")
-    amount_crop = st.number_input("Amount of Crop (in hectares)", min_value=0.0, step=0.1)
-
-    # Save Fertilizer and Crop Info
-    if st.button("Save Fertilizer and Crop Info"):
-        st.session_state.fertilizer_type = fertilizer
-        st.session_state.fertilizer_amount = amount_fertilizer
-        st.session_state.crop_type = crop
-        st.session_state.crop_amount = amount_crop
-        st.success("Fertilizer and Crop Information Saved!")
-
-    # Continue with the existing farm boundary setup and display...
     if not st.session_state.setting_boundary and not st.session_state.farm_boundary:
         st.write("Would you like to set up your farm boundaries?")
         col1, col2 = st.columns([0.2, 0.2])
         with col1:
             if st.button("Yes"):
                 st.session_state.setting_boundary = True
-                st.rerun()
+                st.experimental_rerun()
         with col2:
             if st.button("No"):
                 st.session_state.setting_boundary = False
-                st.rerun()
-
+                st.experimental_rerun()
+    
     if st.session_state.setting_boundary:
         if st.session_state.address:
             try:
@@ -161,11 +134,12 @@ elif st.session_state.page == "My Farm":
                     st.session_state.farm_boundary = st.session_state.temp_boundary
                     st.session_state.setting_boundary = False
                     st.session_state.temp_boundary = None
-                    st.rerun()
+                    st.session_state.page = "My Farm"
+                    st.experimental_rerun()
             with col2:
                 if st.button("Reset Boundaries"):
                     st.session_state.temp_boundary = None
-                    st.rerun()
+                    st.experimental_rerun()
 
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
@@ -185,8 +159,8 @@ elif st.session_state.page == "My Farm":
         # Allow the user to draw on the map to mark areas
         draw = Draw(
             draw_options={ 
-                "polyline": {"shapeOptions": {"color": "red"}} ,
-                "polygon": {"shapeOptions": {"color": "green"}} ,
+                "polyline": {"shapeOptions": {"color": "red"}},
+                "polygon": {"shapeOptions": {"color": "green"}},
                 "circle": False,
                 "rectangle": False,
                 "marker": False,
@@ -206,3 +180,32 @@ elif st.session_state.page == "My Farm":
             st.write("Marked regions for exclusion:")
             for area in st.session_state.marked_areas:
                 st.write(f"Area: {area['type']} with coordinates: {area['geometry']['coordinates']}")
+
+        if st.button("Save Marked Regions"):
+            # Logic to handle saving marked regions for future differential equation processing
+            st.success("Marked regions saved!")
+
+        # Fertilizer and Crop Info
+        st.write("### Fertilizer and Crop Information")
+        fertilizer_type = st.selectbox("Select Fertilizer", ["NPK", "Urea", "Compost", "Other"])
+        amount_fertilizer = st.number_input("Enter Amount of Fertilizer Used (kg)", min_value=0.0)
+        crop_type = st.text_input("Enter Crop Type")
+        crop_amount = st.number_input("Enter Amount of Crop (kg)", min_value=0.0)
+
+        # Store the input data in session state
+        if st.button("Save Fertilizer and Crop Info"):
+            st.session_state.fertilizer_info = {
+                "fertilizer_type": fertilizer_type,
+                "amount_fertilizer": amount_fertilizer,
+                "crop_type": crop_type,
+                "crop_amount": crop_amount
+            }
+            st.success("Fertilizer and Crop Information saved!")
+
+# Settings Page
+elif st.session_state.page == "Settings":
+    st.markdown("""<h2 style="color: #228B22;">⚙️ Settings</h2>""", unsafe_allow_html=True)
+    
+    st.write("### Profile Information")
+    st.text_input("Username", "fern", disabled=True)
+    password = st.text_input("Password",
