@@ -1,11 +1,38 @@
 import streamlit as st
 import folium
+import pandas as pd
+import numpy as np
+import joblib
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 from folium.plugins import Draw
-import pandas as pd
-import numpy as np
 from scipy.integrate import odeint
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
+
+# ========== Step I: Sample Data ==========
+soil_npk_df = pd.read_csv("soil_data.csv")
+
+# Encode categorical variable (soil type)
+le = LabelEncoder()
+soil_npk_df["soil_type"] = le.fit_transform(soil_npk_df["soil_type"])
+
+# ========== Step II: Train Machine Learning Model ==========
+npk_X = soil_npk_df.drop(columns=["N", "P", "K"])  # Input features
+npk_y = soil_npk_df[["N", "P", "K"]]  # Target variables
+
+npk_X_train, npk_x_test, npk_y_train, npk_y_test = train_test_split(npk_X, npk_y, test_size=0.2, random_state=42)
+
+soil_npk_model = RandomForestRegressor(n_estimators=100, random_state=42)
+soil_npk_model.fit(npk_X_train, npk_y_train)
+
+npk_y_pred = soil_npk_model.predict(npk_x_test)
+mae = mean_absolute_error(npk_y_test, npk_y_pred)
+
+# Save soil_npk_model
+joblib.dump(soil_npk_model, "soil_nutrient_model.pkl")
 
 # Set Streamlit page config
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
@@ -14,7 +41,7 @@ st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = "My Farm"
 if 'address' not in st.session_state:
-    st.session_state.address = ""
+    st.session_state.address = "My Address"
 if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
     st.session_state.latitude = None
     st.session_state.longitude = None
@@ -77,7 +104,7 @@ elif st.session_state.page == "My Farm":
         m = folium.Map(location=[0, 0], zoom_start=2,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
-        draw = Draw(draw_options={"polyline": False, "polygon": False, "poly": False, "rectangle": True, "circle": False, "marker": False, "circlemarker": False})
+        draw = Draw(edit_options={"remove":True}, draw_options={"polyline": False, "polygon": False, "poly": False, "rectangle": True, "circle": False, "marker": False, "circlemarker": False})
         m.add_child(draw)
         map_data = st_folium(m, width=700, height=500)
 
@@ -136,12 +163,40 @@ elif st.session_state.page == "My Farm":
     crop_choices = ["Select", "Rice", "Wheat", "Corn", "Soybeans", "Other"]
     crop_type = st.selectbox("Type of Crop Planted", crop_choices)
     
-    soil_npk_ratio = st.text_input("Soil NPK Ratio (e.g., 15-15-15)")
-    
-    land_size = st.number_input("Land Size (hectares)", min_value=0.1, step=0.1)
+    # Soil NPK Ratio
+    soil_type_input = st.selectbox("Soil Type", ["Sandy", "Loamy", "Clay", "Silty", "Peaty", "Saline", "Chalky"])
+    ph_input = st.number_input("pH Level", min_value=4.0, max_value=9.0, value=6.5)
+    moisture_input = st.slider("Moisture (%)", min_value=0, max_value=100, value=20)
+    organic_matter_input = st.number_input("Organic Matter (%)", min_value=0.0, max_value=10.0, value=3.0)
+     
+    # Save Fertilizer and Crop Info
+    if st.button("Save Fertilizer and Crop Info"):
+        st.session_state.fertilizer_type = fertilizer_type
+        st.session_state.fertilizer_amount = fertilizer_amount
+        st.session_state.crop_type = crop_type
+        st.session_state.soil_type = soil_type_input
+        st.session_state.ph = ph_input
+        st.session_state.moisture = moisture_input
+        st.session_state.organic_matter = organic_matter_input
+        # Load soil_npk_model
+        soil_npk_model = joblib.load("soil_nutrient_model.pkl")
+
+        # Make prediction: init_npk[0] -> N, [1] -> P, [2] -> K (all in ppm)
+        init_npk_pred = soil_npk_model.predict(pd.DataFrame({
+            "soil_type": [le.transform([soil_type_input])[0]],
+            "pH": [ph_input],
+            "moisture": [moisture_input],
+            "organic_matter": [organic_matter_input]
+        }))[0]
+
+        st.session_state.init_npk = (init_npk_pred[0], init_npk_pred[1], init_npk_pred[2])
+
+        print("Predicted init NPK: " + str(st.session_state.init_npk[0]) + "-" + str(st.session_state.init_npk[1]) + "-" + str(st.session_state.init_npk[2]))
+        
+        st.success("Fertilizer and Crop Information Saved!")
 
     if st.button("Run Simulation"):
-        if fertilizer_type == "Select" or crop_type == "Select" or not soil_npk_ratio or land_size <= 0:
+        if fertilizer_type == "Select" or crop_type == "Select" or not soil_type_input:
             st.error("Please fill in all fields before running the simulation.")
         else:
             simulation_days = 30
