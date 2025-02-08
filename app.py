@@ -29,8 +29,6 @@ if 'fertilizer_amount' not in st.session_state:
     st.session_state.fertilizer_amount = None
 if 'crop_type' not in st.session_state:
     st.session_state.crop_type = None
-if 'crop_amount' not in st.session_state:
-    st.session_state.crop_amount = None
 if 'soil_type' not in st.session_state:
     st.session_state.soil_type = None
 if 'page' not in st.session_state:
@@ -81,7 +79,6 @@ elif st.session_state.page == "My Farm":
     # Crop Info - Now a Dropdown for Crop Type
     crop_types = ["Select", "Wheat", "Rice", "Corn", "Soybeans", "Cotton", "Tomato"]
     crop = st.selectbox("Select Crop Type", crop_types)
-    amount_crop = st.number_input("Amount of Crop (in hectares)", min_value=0.0, step=0.1)
 
     # Save Fertilizer, Soil, and Crop Info
     if st.button("Save Fertilizer, Soil, and Crop Info"):
@@ -89,7 +86,6 @@ elif st.session_state.page == "My Farm":
         st.session_state.fertilizer_amount = amount_fertilizer
         st.session_state.soil_type = soil
         st.session_state.crop_type = crop
-        st.session_state.crop_amount = amount_crop
         st.success("Fertilizer, Soil, and Crop Information Saved!")
 
     # Continue with the existing farm boundary setup and display...
@@ -204,4 +200,3 @@ elif st.session_state.page == "My Farm":
         )
         m.add_child(draw)
         map_data = st_folium(m, width=700, height=500)
-
