@@ -145,13 +145,30 @@ elif st.session_state.page == "My Farm":
                 st.metric(label="Total Runoff",
                           value=f"{total_runoff:.2f} ppm·hrs")
 
-# Settings Page (Restored Features)
+# Settings Page (Updated to show username/password, toggle password visibility)
 elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
     
-    # User Inputs for Settings Page: Address and Geocoding Features Restored
-    username_input = st.text_input("Username:", value=st.session_state.username)
-
+    # Display Username and Password
+    st.write("### User Information")
+    st.write(f"**Username:** {st.session_state.username}")
+    
+    # Password toggle feature
+    password_placeholder = st.empty()
+    if 'show_password' not in st.session_state:
+        st.session_state.show_password = False
+    
+    password_toggle = st.button("Show/Hide Password")
+    if password_toggle:
+        st.session_state.show_password = not st.session_state.show_password
+    
+    # Display password with the toggle button
+    if st.session_state.show_password:
+        password_placeholder.write(f"**Password:** {st.session_state.password}")
+    else:
+        password_placeholder.write(f"**Password:** {'•' * len(st.session_state.password)}")
+    
+    # Farm Name and Address Input
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
@@ -165,5 +182,10 @@ elif st.session_state.page == "Settings":
             longitude_result = location_result.longitude
             
             # Save to session state variables.
-            if farm_name_input != "":
-                latitude_result 
+            st.session_state.latitude = latitude_result
+            st.session_state.longitude = longitude_result
+            st.session_state.farm_name = farm_name_input
+            st.session_state.address = address_input
+            st.success("Farm location updated successfully!")
+        else:
+            st.warning("Could not find the location. Please enter a valid address.")
