@@ -29,8 +29,8 @@ def navigate(page):
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
 st.sidebar.button("🏠 Home", on_click=lambda: navigate("Home"))
-st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
 st.sidebar.button("🌍 My Farm", on_click=lambda: navigate("My Farm"))
+st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
 
 # Home Page
 if st.session_state.page == "Home":
@@ -45,29 +45,6 @@ if st.session_state.page == "Home":
     st.write(f"**Farm Name:** {st.session_state.farm_name if st.session_state.farm_name else 'Not Set'}")
     st.write("**Last Fertilizer Used:** Not Available")
     st.write("**Anticipated Rain Day:** Not Available")
-
-# Settings Page
-elif st.session_state.page == "Settings":
-    st.markdown("""
-        <h2 style="color: #228B22;">⚙️ Settings</h2>
-    """, unsafe_allow_html=True)
-    
-    st.write("### Profile Information")
-    st.text_input("Username", "fern", disabled=True)
-    password = st.text_input("Password", "soil", type="password")
-    show_password = st.checkbox("Show Password")
-    if show_password:
-        st.text_input("Password", "soil", type="default", disabled=True)
-    
-    st.write("### Farm Information")
-    farm_name = st.text_input("Farm Name", st.session_state.farm_name)
-    address = st.text_input("Farm Address", st.session_state.address)
-    if st.button("Save Changes"):
-        st.session_state.farm_name = farm_name
-        st.session_state.address = address
-        st.success("Farm details updated successfully!")
-    
-    st.button("Sign Out", on_click=lambda: navigate("Home"))
 
 # My Farm Page
 elif st.session_state.page == "My Farm":
@@ -91,7 +68,7 @@ elif st.session_state.page == "My Farm":
                     st.session_state.longitude = location.longitude
                 else:
                     st.warning("Could not find the location. Please enter a valid address.")
-            except Exception as e:
+            except Exception:
                 st.error("Geocoding service unavailable. Try again later.")
         
         if st.session_state.latitude and st.session_state.longitude:
@@ -119,3 +96,26 @@ elif st.session_state.page == "My Farm":
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
         st.button("Change Farm Boundaries", on_click=lambda: navigate("My Farm"))
+
+# Settings Page
+elif st.session_state.page == "Settings":
+    st.markdown("""
+        <h2 style="color: #228B22;">⚙️ Settings</h2>
+    """, unsafe_allow_html=True)
+    
+    st.write("### Profile Information")
+    st.text_input("Username", "fern", disabled=True)
+    password = st.text_input("Password", "soil", type="password")
+    show_password = st.checkbox("Show Password")
+    if show_password:
+        st.text_input("Password", "soil", type="default", disabled=True)
+    
+    st.write("### Farm Information")
+    farm_name = st.text_input("Farm Name", st.session_state.farm_name)
+    address = st.text_input("Farm Address", st.session_state.address)
+    if st.button("Save Changes"):
+        st.session_state.farm_name = farm_name
+        st.session_state.address = address
+        st.success("Farm details updated successfully!")
+    
+    st.button("Sign Out", on_click=lambda: navigate("Home"))
