@@ -28,18 +28,13 @@ if 'page' not in st.session_state:
 if 'fertilizer_info' not in st.session_state:
     st.session_state.fertilizer_info = {}
 
-def navigate(page):
-    st.session_state.page = page
-    st.experimental_rerun()
-
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
-st.sidebar.button("🏠 Home", on_click=lambda: navigate("Home"))
-st.sidebar.button("🌍 My Farm", on_click=lambda: navigate("My Farm"))
-st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
+page = st.sidebar.radio("Select a page", ["🏠 Home", "🌍 My Farm", "⚙️ Settings"])
+st.session_state.page = page
 
 # Home Page
-if st.session_state.page == "Home":
+if st.session_state.page == "🏠 Home":
     st.markdown("""
         <h1 style="text-align: center; color: #228B22;">Welcome to FERN</h1>
         <h3 style="text-align: center; color: #2E8B57;">Your Personalized Farm Management System</h3>
@@ -53,7 +48,7 @@ if st.session_state.page == "Home":
     st.write("**Anticipated Rain Day:** Not Available")
 
 # My Farm Page
-elif st.session_state.page == "My Farm":
+elif st.session_state.page == "🌍 My Farm":
     st.markdown(f"""
         <h2 style="color: #228B22;">🌍 {st.session_state.farm_name if st.session_state.farm_name else 'My Farm'}</h2>
     """, unsafe_allow_html=True)
@@ -64,11 +59,9 @@ elif st.session_state.page == "My Farm":
         with col1:
             if st.button("Yes"):
                 st.session_state.setting_boundary = True
-                st.experimental_rerun()
         with col2:
             if st.button("No"):
                 st.session_state.setting_boundary = False
-                st.experimental_rerun()
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
@@ -134,12 +127,10 @@ elif st.session_state.page == "My Farm":
                     st.session_state.farm_boundary = st.session_state.temp_boundary
                     st.session_state.setting_boundary = False
                     st.session_state.temp_boundary = None
-                    st.session_state.page = "My Farm"
-                    st.experimental_rerun()
+                    st.session_state.page = "🌍 My Farm"
             with col2:
                 if st.button("Reset Boundaries"):
                     st.session_state.temp_boundary = None
-                    st.experimental_rerun()
 
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
@@ -203,10 +194,9 @@ elif st.session_state.page == "My Farm":
             st.success("Fertilizer and Crop Information saved!")
 
 # Settings Page
-elif st.session_state.page == "Settings":
+elif st.session_state.page == "⚙️ Settings":
     st.markdown("""<h2 style="color: #228B22;">⚙️ Settings</h2>""", unsafe_allow_html=True)
     
     st.write("### Profile Information")
     st.text_input("Username", "fern", disabled=True)
-    password = st.text_input("Password", value="soil", type="password")  # Fixed parentheses here.
-    st
+    password = st
