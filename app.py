@@ -38,12 +38,14 @@ if st.session_state.page == "My Farm":
         <h2 style="color: #228B22;">🌍 {st.session_state.farm_name if st.session_state.farm_name else 'My Farm'}</h2>
     """, unsafe_allow_html=True)
 
+    # Prompt the user first
     if not st.session_state.setting_boundary:
         setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
         if setup == "Yes":
             st.session_state.setting_boundary = True
-            navigate("My Farm")  
+            st.rerun()
 
+    # Show map only after they agree to set boundaries
     if st.session_state.setting_boundary:
         if st.session_state.address:
             geolocator = Nominatim(user_agent="fern_farm_locator")
@@ -54,25 +56,28 @@ if st.session_state.page == "My Farm":
 
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
-            m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12)
 
-            # Fix for folium.plugins.Draw
-            try:
-                draw = folium.plugins.Draw(
-                    export=True,
-                    draw_options={
-                        "polyline": True,
-                        "polygon": True,
-                        "rectangle": True,
-                        "circle": False,
-                        "marker": False,
-                        "circlemarker": False
-                    },
-                    edit_options={"edit": True, "remove": True}
-                )
-                draw.add_to(m)
-            except AttributeError:
-                st.error("Error loading the Draw plugin. Try upgrading folium.")
+            # Satellite map with zoom and polyline only
+            m = folium.Map(
+                location=[st.session_state.latitude, st.session_state.longitude],
+                zoom_start=15,
+                tiles="Stamen Terrain"
+            )
+            folium.TileLayer("Esri.WorldImagery").add_to(m)  # Satellite imagery
+
+            draw = folium.plugins.Draw(
+                export=True,
+                draw_options={
+                    "polyline": True,  # Allow only polyline drawing
+                    "polygon": False,
+                    "rectangle": False,
+                    "circle": False,
+                    "marker": False,
+                    "circlemarker": False
+                },
+                edit_options={"edit": True, "remove": True}
+            )
+            draw.add_to(m)
 
             map_data = st_folium(m, width=700, height=500)
 
@@ -83,7 +88,8 @@ if st.session_state.page == "My Farm":
                     st.write("Would you like to save these farm boundaries?")
                     if st.button("Save Boundaries"):
                         st.session_state.setting_boundary = False
-                        navigate("My Farm")
+                        st.success("Farm boundaries saved successfully!")
+                        st.rerun()
         else:
             st.warning("Please set your farm address in Settings to display the map.")
 
