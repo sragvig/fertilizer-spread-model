@@ -1,4 +1,4 @@
-import streamlit as st 
+import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
@@ -24,7 +24,6 @@ if 'setting_boundary' not in st.session_state:
 
 def navigate(page):
     st.session_state.page = page
-    st.experimental_rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -79,7 +78,7 @@ elif st.session_state.page == "My Farm":
         setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
         if setup == "Yes":
             st.session_state.setting_boundary = True
-            st.experimental_rerun()
+            navigate("My Farm")  # Re-trigger the page load to proceed with boundary setup
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
@@ -106,7 +105,7 @@ elif st.session_state.page == "My Farm":
                     st.write("Would you like to save these farm boundaries?")
                     if st.button("Save Boundaries"):
                         st.session_state.setting_boundary = False
-                        st.experimental_rerun()
+                        navigate("My Farm")  # Update page state without rerun
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
