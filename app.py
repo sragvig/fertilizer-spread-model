@@ -191,7 +191,7 @@ elif st.session_state.page == "My Farm":
 
         st.session_state.init_npk = (init_npk_pred[0], init_npk_pred[1], init_npk_pred[2])
 
-        print("Predicted init NPK: " + str(st.session_state.init_npk[0]) + "-" + str(st.session_state.init_npk[1]) + "-" + str(st.session_state.init_npk[2]))
+        print("Predicted init NPK: " + str(st.session_state.init_npk[0]) + "-" + str(st.session_state.init_npk[1]) + "-" + str(st.session_state.init_npk[2])) # debug
         
         st.success("Fertilizer and Crop Information Saved!")
 
@@ -199,7 +199,7 @@ elif st.session_state.page == "My Farm":
         if fertilizer_type == "Select" or crop_type == "Select" or not soil_type_input:
             st.error("Please fill in all fields before running the simulation.")
         else:
-            land_size = (st.session_state.farm_boundary[0][1][0] - st.session_state.farm_boundary[0][0][0]) * (st.session_state.farm_boundary[0][1][1] - st.session_state.farm_boundary[0][0][1])
+            land_size = (st.session_state.farm_boundary[0][1][0] - st.session_state.farm_boundary[0][0][0]) * (st.session_state.farm_boundary[0][1][1] - st.session_state.farm_boundary[0][0][1]) * (111139/100000 * 111139) # conversion to hectare
             print("land size " + str(land_size))
             simulation_days = 30
             time_points, concentration = generate_sample_data(simulation_days, fertilizer_amount, land_size)
@@ -214,7 +214,7 @@ elif st.session_state.page == "My Farm":
             # Safety Analysis Metrics
             safe_level = 50
             peak_concentration = max(concentration)
-            total_runoff = np.trapz(concentration, time_points)
+            total_runoff = np.trapezoid(concentration, time_points)
             unsafe_hours = len(time_points[concentration > safe_level])
 
             cols = st.columns(3)
