@@ -1,6 +1,6 @@
 import streamlit as st
 import folium
-from streamlit_folium import st_folium, folium_static
+from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 from folium.plugins import Draw
 import pandas as pd
@@ -77,30 +77,53 @@ elif st.session_state.page == "My Farm":
         m = folium.Map(location=[0, 0], zoom_start=2,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
-        draw = Draw(draw_options={"polyline": False, "rectangle": False,
-                                  "circle": False, "marker": False})
+        draw = Draw(draw_options={"polyline": False, "polygon": False, "poly": False, "rectangle": True, "circle": False, "marker": False, "circlemarker": False})
         m.add_child(draw)
         map_data = st_folium(m, width=700, height=500)
 
-        if map_data and "all_drawings" in map_data:
-            st.session_state.farm_boundary = map_data["all_drawings"]
-            st.success("Farm boundaries saved successfully!")
+        if st.button("Save Boundaries"):
+            if map_data and "all_drawings" in map_data:
+                rectangles = []
+                
+                for shape in map_data["all_drawings"]:
+                    # Check if the shape is a GeoJSON Feature
+                    if shape["type"] == "Feature":
+                        geometry = shape.get("geometry", {})
+                        if geometry.get("type") == "Polygon":
+                            coordinates = geometry.get("coordinates", [])
+
+                            # Folium Draw plugin stores rectangles as polygons with 5 points (closed loop)
+                            if len(coordinates) > 0 and len(coordinates[0]) == 5:
+                                # Extract the SW (bottom-left) and NE (top-right) bounds
+                                latitudes = [point[1] for point in coordinates[0]]  # [lon, lat] format
+                                longitudes = [point[0] for point in coordinates[0]]
+
+                                sw = [min(latitudes), min(longitudes)]  # Bottom-left corner
+                                ne = [max(latitudes), max(longitudes)]  # Top-right corner
+
+                                rectangles.append([sw, ne])
+
+                if rectangles:
+                    st.session_state.farm_boundary = rectangles
+                    st.success("Success! Rectangle boundaries saved.")
+                else:
+                    st.warning("No rectangles found. Please draw a rectangle.")
+
     else:
         # Display saved farm boundary on a map
         st.write("### Your Farm Map")
-        m = folium.Map(location=[0, 0], zoom_start=2,
+        m = folium.Map(location=[0, 0], zoom_start=4,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
-        for shape in st.session_state.farm_boundary:
-            if shape['geometry']['type'] == 'Polygon':
-                folium.Polygon(
-                    locations=shape['geometry']['coordinates'][0],
-                    color="blue",
-                    fill=True,
-                    fill_color="blue",
-                    fill_opacity=0.2
-                ).add_to(m)
-        folium_static(m)
+        for sbounds in st.session_state.farm_boundary:
+            folium.Rectangle(
+                bounds=sbounds,
+                color="blue",
+                fill=True,
+                fill_color="blue",
+                fill_opacity=0.2
+            ).add_to(m)
+        st_folium(m,width=700,height=500)
 
     # Fertilizer Runoff Predictor (Below Map)
     st.write("### Fertilizer Runoff Predictor")
