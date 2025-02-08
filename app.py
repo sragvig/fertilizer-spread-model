@@ -23,18 +23,29 @@ if 'temp_boundary' not in st.session_state:
     st.session_state.temp_boundary = None
 if 'marked_areas' not in st.session_state:
     st.session_state.marked_areas = []
+if 'fertilizer_type' not in st.session_state:
+    st.session_state.fertilizer_type = None
+if 'fertilizer_amount' not in st.session_state:
+    st.session_state.fertilizer_amount = None
+if 'crop_type' not in st.session_state:
+    st.session_state.crop_type = None
+if 'crop_amount' not in st.session_state:
+    st.session_state.crop_amount = None
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
-if 'fertilizer_info' not in st.session_state:
-    st.session_state.fertilizer_info = {}
+
+def navigate(page):
+    st.session_state.page = page
+    st.rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
-page = st.sidebar.radio("Select a page", ["🏠 Home", "🌍 My Farm", "⚙️ Settings"])
-st.session_state.page = page
+st.sidebar.button("🏠 Home", on_click=lambda: navigate("Home"))
+st.sidebar.button("🌍 My Farm", on_click=lambda: navigate("My Farm"))
+st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
 
 # Home Page
-if st.session_state.page == "🏠 Home":
+if st.session_state.page == "Home":
     st.markdown("""
         <h1 style="text-align: center; color: #228B22;">Welcome to FERN</h1>
         <h3 style="text-align: center; color: #2E8B57;">Your Personalized Farm Management System</h3>
@@ -48,21 +59,44 @@ if st.session_state.page == "🏠 Home":
     st.write("**Anticipated Rain Day:** Not Available")
 
 # My Farm Page
-elif st.session_state.page == "🌍 My Farm":
+elif st.session_state.page == "My Farm":
     st.markdown(f"""
         <h2 style="color: #228B22;">🌍 {st.session_state.farm_name if st.session_state.farm_name else 'My Farm'}</h2>
     """, unsafe_allow_html=True)
     
+    # Fertilizer and Crop Info Section
+    st.write("### Fertilizer and Crop Info")
+
+    # Fertilizer Choice Dropdown
+    fertilizer_choices = ["Select", "Urea", "NPK", "Compost", "Ammonium Nitrate"]
+    fertilizer = st.selectbox("Select Fertilizer Type", fertilizer_choices)
+    amount_fertilizer = st.number_input("Amount of Fertilizer Used (kg)", min_value=0.0, step=0.1)
+
+    # Crop Info
+    crop = st.text_input("Type of Crop Planted")
+    amount_crop = st.number_input("Amount of Crop (in hectares)", min_value=0.0, step=0.1)
+
+    # Save Fertilizer and Crop Info
+    if st.button("Save Fertilizer and Crop Info"):
+        st.session_state.fertilizer_type = fertilizer
+        st.session_state.fertilizer_amount = amount_fertilizer
+        st.session_state.crop_type = crop
+        st.session_state.crop_amount = amount_crop
+        st.success("Fertilizer and Crop Information Saved!")
+
+    # Continue with the existing farm boundary setup and display...
     if not st.session_state.setting_boundary and not st.session_state.farm_boundary:
         st.write("Would you like to set up your farm boundaries?")
         col1, col2 = st.columns([0.2, 0.2])
         with col1:
             if st.button("Yes"):
                 st.session_state.setting_boundary = True
+                st.rerun()
         with col2:
             if st.button("No"):
                 st.session_state.setting_boundary = False
-    
+                st.rerun()
+
     if st.session_state.setting_boundary:
         if st.session_state.address:
             try:
@@ -127,10 +161,11 @@ elif st.session_state.page == "🌍 My Farm":
                     st.session_state.farm_boundary = st.session_state.temp_boundary
                     st.session_state.setting_boundary = False
                     st.session_state.temp_boundary = None
-                    st.session_state.page = "🌍 My Farm"
+                    st.rerun()
             with col2:
                 if st.button("Reset Boundaries"):
                     st.session_state.temp_boundary = None
+                    st.rerun()
 
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
@@ -150,8 +185,8 @@ elif st.session_state.page == "🌍 My Farm":
         # Allow the user to draw on the map to mark areas
         draw = Draw(
             draw_options={ 
-                "polyline": {"shapeOptions": {"color": "red"}},
-                "polygon": {"shapeOptions": {"color": "green"}},
+                "polyline": {"shapeOptions": {"color": "red"}} ,
+                "polygon": {"shapeOptions": {"color": "green"}} ,
                 "circle": False,
                 "rectangle": False,
                 "marker": False,
@@ -171,32 +206,3 @@ elif st.session_state.page == "🌍 My Farm":
             st.write("Marked regions for exclusion:")
             for area in st.session_state.marked_areas:
                 st.write(f"Area: {area['type']} with coordinates: {area['geometry']['coordinates']}")
-
-        if st.button("Save Marked Regions"):
-            # Logic to handle saving marked regions for future differential equation processing
-            st.success("Marked regions saved!")
-
-        # Fertilizer and Crop Info
-        st.write("### Fertilizer and Crop Information")
-        fertilizer_type = st.selectbox("Select Fertilizer", ["NPK", "Urea", "Compost", "Other"])
-        amount_fertilizer = st.number_input("Enter Amount of Fertilizer Used (kg)", min_value=0.0)
-        crop_type = st.text_input("Enter Crop Type")
-        crop_amount = st.number_input("Enter Amount of Crop (kg)", min_value=0.0)
-
-        # Store the input data in session state
-        if st.button("Save Fertilizer and Crop Info"):
-            st.session_state.fertilizer_info = {
-                "fertilizer_type": fertilizer_type,
-                "amount_fertilizer": amount_fertilizer,
-                "crop_type": crop_type,
-                "crop_amount": crop_amount
-            }
-            st.success("Fertilizer and Crop Information saved!")
-
-# Settings Page
-elif st.session_state.page == "⚙️ Settings":
-    st.markdown("""<h2 style="color: #228B22;">⚙️ Settings</h2>""", unsafe_allow_html=True)
-    
-    st.write("### Profile Information")
-    st.text_input("Username", "fern", disabled=True)
-    password = st
