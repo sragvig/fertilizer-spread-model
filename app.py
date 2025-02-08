@@ -33,25 +33,9 @@ if 'crop_type' not in st.session_state:
 if 'soil_npk_ratio' not in st.session_state:
     st.session_state.soil_npk_ratio = None
 
-# Helper functions
-def solve_pde(initial_concentration, time_points, D, v, R, S):
-    def dC_dt(C, t):
-        dC = D * np.gradient(np.gradient(C)) - v * np.gradient(C) - R * C + S
-        return dC
-    solution = odeint(dC_dt, initial_concentration, time_points)
-    return solution
-
-@st.cache_data
-def generate_sample_data(days, fertilizer_amount, land_size):
-    time_points = np.linspace(0, days, days * 24)
-    initial_concentration = np.zeros(100)
-    initial_concentration[0] = fertilizer_amount / land_size
-    D, v, R, S = 0.1, 0.05, 0.01, 0.001
-    concentration = solve_pde(initial_concentration, time_points, D, v, R, S)
-    return time_points, concentration[:, 0]
-
 def navigate(page):
     st.session_state.page = page
+    st.rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -72,9 +56,14 @@ if st.session_state.get('page', 'Home') == "Home":
 elif st.session_state.page == "My Farm":
     st.title(f"🌍 {st.session_state.farm_name}")
     
+    if st.session_state.latitude and st.session_state.longitude:
+        map_location = [st.session_state.latitude, st.session_state.longitude]
+    else:
+        map_location = [0, 0]
+    
     if not st.session_state.farm_boundary:
         st.write("### Draw Your Farm Boundary")
-        m = folium.Map(location=[0, 0], zoom_start=2,
+        m = folium.Map(location=map_location, zoom_start=12,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
         draw = Draw(draw_options={"polyline": False, "rectangle": False,
@@ -87,7 +76,7 @@ elif st.session_state.page == "My Farm":
             st.success("Farm boundaries saved successfully!")
     else:
         st.write("### Your Farm Map")
-        m = folium.Map(location=[0, 0], zoom_start=2,
+        m = folium.Map(location=map_location, zoom_start=12,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
         for shape in st.session_state.farm_boundary:
@@ -111,3 +100,17 @@ elif st.session_state.page == "Settings":
     password_placeholder.text_input("Password:", value=password_display, disabled=True)
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
+    
+    if st.button("Save"):
+        st.session_state.farm_name = farm_name_input
+        st.session_state.address = address_input
+        
+        if address_input:
+            geolocator = Nominatim(user_agent="fern_farm_locator")
+            location = geolocator.geocode(address_input, timeout=10)
+            if location:
+                st.session_state.latitude = location.latitude
+                st.session_state.longitude = location.longitude
+                st.success("Farm location updated successfully!")
+            else:
+                st.warning("Could not find the location. Please enter a valid address.")
