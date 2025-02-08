@@ -21,6 +21,8 @@ if 'setting_boundary' not in st.session_state:
     st.session_state.setting_boundary = False
 if 'temp_boundary' not in st.session_state:
     st.session_state.temp_boundary = None
+if 'marked_areas' not in st.session_state:
+    st.session_state.marked_areas = []
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
@@ -89,7 +91,7 @@ elif st.session_state.page == "My Farm":
             )
 
             draw = Draw(
-                draw_options={
+                draw_options={ 
                     "polyline": {
                         "shapeOptions": {"color": "red"},
                         "metric": False,
@@ -138,10 +140,47 @@ elif st.session_state.page == "My Farm":
 
     if st.session_state.farm_boundary:
         st.success("Farm boundaries saved successfully!")
-        if st.button("Change Farm Boundaries"):
-            st.session_state.farm_boundary = None
-            st.session_state.setting_boundary = True
-            st.rerun()
+
+        # Display the saved farm boundaries
+        m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12,
+                       tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", attr="Google")
+        folium.Polygon(
+            locations=[point[1] for point in st.session_state.farm_boundary[0]['geometry']['coordinates']],
+            color="blue", fill=True, fill_color="blue", fill_opacity=0.2
+        ).add_to(m)
+
+        st_folium(m, width=700, height=500)
+
+        st.write("Now, mark the bodies of water and omitted regions.")
+
+        # Allow the user to draw on the map to mark areas
+        draw = Draw(
+            draw_options={ 
+                "polyline": {"shapeOptions": {"color": "red"}},
+                "polygon": {"shapeOptions": {"color": "green"}},
+                "circle": False,
+                "rectangle": False,
+                "marker": False,
+                "circlemarker": False
+            },
+            edit_options={"remove": True}
+        )
+        m.add_child(draw)
+        map_data = st_folium(m, width=700, height=500)
+
+        if map_data and "all_drawings" in map_data:
+            marked_areas = map_data["all_drawings"]
+            if marked_areas:
+                st.session_state.marked_areas.extend(marked_areas)
+
+        if st.session_state.marked_areas:
+            st.write("Marked regions for exclusion:")
+            for area in st.session_state.marked_areas:
+                st.write(f"Area: {area['type']} with coordinates: {area['geometry']['coordinates']}")
+
+        if st.button("Save Marked Regions"):
+            # Logic to handle saving marked regions for future differential equation processing
+            st.success("Marked regions saved!")
 
 # Settings Page
 elif st.session_state.page == "Settings":
