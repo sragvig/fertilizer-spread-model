@@ -10,10 +10,6 @@ from scipy.integrate import odeint
 # Set Streamlit page config
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
-# Ensure username and password persist across refreshes
-st.session_state.username = "fern"
-st.session_state.password = "soil"
-
 # Initialize session state variables
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = "My Farm"
@@ -33,7 +29,7 @@ if 'crop_type' not in st.session_state:
 if 'soil_npk_ratio' not in st.session_state:
     st.session_state.soil_npk_ratio = None
 
-# Helper functions for Fertilizer Runoff Predictor
+# Helper functions from your original code
 def solve_pde(initial_concentration, time_points, D, v, R, S):
     def dC_dt(C, t):
         dC = D * np.gradient(np.gradient(C)) - v * np.gradient(C) - R * C + S
@@ -50,10 +46,8 @@ def generate_sample_data(days, fertilizer_amount, land_size):
     concentration = solve_pde(initial_concentration, time_points, D, v, R, S)
     return time_points, concentration[:, 0]
 
-# Navigation function
 def navigate(page):
     st.session_state.page = page
-    st.rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -66,9 +60,6 @@ if st.session_state.get('page', 'Home') == "Home":
     st.title("Welcome to FERN")
     st.write("Your Personalized Farm Management System.")
     st.write(f"**Farm Name:** {st.session_state.farm_name}")
-    st.write(f"**Username:** {st.session_state.username}")
-    password_hidden = "•" * len(st.session_state.password)
-    st.write(f"**Password:** {password_hidden}")
 
 # My Farm Page (Google Maps + Fertilizer Predictor)
 elif st.session_state.page == "My Farm":
@@ -172,10 +163,5 @@ elif st.session_state.page == "Settings":
             longitude_result = location_result.longitude
             
             # Save to session state variables.
-            st.session_state.latitude = latitude_result
-            st.session_state.longitude = longitude_result
-            st.session_state.farm_name = farm_name_input
-            st.session_state.address = address_input
-            st.success("Farm location updated successfully!")
-        else:
-            st.warning("Could not find the location. Please enter a valid address.")
+            if farm_name_input != "":
+                latitude_result 
