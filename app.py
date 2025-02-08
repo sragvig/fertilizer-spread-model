@@ -2,12 +2,12 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
-from folium.plugins import Draw
+import folium.plugins
 
-# Set Streamlit page config
+# Streamlit App UI
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
-# Initialize session state variables
+# Initialize session state if not already set
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = ""
 if 'address' not in st.session_state:
@@ -15,16 +15,16 @@ if 'address' not in st.session_state:
 if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
     st.session_state.latitude = None
     st.session_state.longitude = None
+if 'page' not in st.session_state:
+    st.session_state.page = "Home"
 if 'farm_boundary' not in st.session_state:
     st.session_state.farm_boundary = None
 if 'setting_boundary' not in st.session_state:
     st.session_state.setting_boundary = False
-if 'page' not in st.session_state:
-    st.session_state.page = "Home"
 
 def navigate(page):
     st.session_state.page = page
-    st.rerun()
+    st.experimental_rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -79,40 +79,41 @@ elif st.session_state.page == "My Farm":
         setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
         if setup == "Yes":
             st.session_state.setting_boundary = True
-            st.rerun()
+            st.experimental_rerun()
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
+            geolocator = Nominatim(user_agent="fern_farm_locator")
             try:
-                geolocator = Nominatim(user_agent="fern_farm_locator")
-                location = geolocator.geocode(st.session_state.address, timeout=10)
+                location = geolocator.geocode(st.session_state.address)
                 if location:
                     st.session_state.latitude = location.latitude
                     st.session_state.longitude = location.longitude
-                else:
-                    st.warning("Could not find the location. Please enter a valid address.")
-            except Exception as e:
-                st.error("Geocoding service unavailable. Try again later.")
+            except:
+                st.warning("Geocoding service unavailable. Please try again later.")
         
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
-            m = folium.Map(
-                location=[st.session_state.latitude, st.session_state.longitude], 
-                zoom_start=12, 
-                tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-                attr="Google"
+            m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12, tiles='Satellite')
+            draw = folium.plugins.Draw(
+                draw_polygon=True, draw_marker=False, draw_rectangle=False, draw_circle=False,
+                draw_circlemarker=False, draw_polyline=True, edit=True
             )
-            Draw(export=True).add_to(m)
+            m.add_child(draw)
             map_data = st_folium(m, width=700, height=500)
             
             if map_data and "all_drawings" in map_data:
                 boundary = map_data["all_drawings"]
                 if boundary:
-                    st.session_state.farm_boundary = boundary
-                    st.write("Would you like to save these farm boundaries?")
-                    if st.button("Save Boundaries"):
-                        st.session_state.setting_boundary = False
-                        st.rerun()
+                    # Ensure shape closure when clicking the first point
+                    first_point = boundary[0]['geometry']['coordinates'][0]
+                    last_point = boundary[0]['geometry']['coordinates'][-1]
+                    if first_point == last_point:
+                        st.session_state.farm_boundary = boundary
+                        st.write("Would you like to save these farm boundaries?")
+                        if st.button("Save Boundaries"):
+                            st.session_state.setting_boundary = False
+                            st.experimental_rerun()
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
