@@ -11,8 +11,6 @@ from scipy.integrate import odeint
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
 # Initialize session state variables
-if 'username' not in st.session_state:
-    st.session_state.username = "fern"  # Default username
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = "My Farm"
 if 'address' not in st.session_state:
@@ -30,6 +28,12 @@ if 'crop_type' not in st.session_state:
     st.session_state.crop_type = None
 if 'soil_npk_ratio' not in st.session_state:
     st.session_state.soil_npk_ratio = None
+
+# Initialize username and password if not already in session state
+if 'username' not in st.session_state:
+    st.session_state.username = 'fern'  # default username
+if 'password' not in st.session_state:
+    st.session_state.password = 'soil'  # default password
 
 # Helper functions from your original code
 def solve_pde(initial_concentration, time_points, D, v, R, S):
@@ -149,6 +153,12 @@ elif st.session_state.page == "My Farm":
 
 # Settings Page (Updated to show username/password, toggle password visibility)
 elif st.session_state.page == "Settings":
+    # Initialize username and password if not already in session state
+    if 'username' not in st.session_state:
+        st.session_state.username = 'fern'  # default username
+    if 'password' not in st.session_state:
+        st.session_state.password = 'soil'  # default password
+    
     st.title("⚙️ Settings")
     
     # Display Username and Password
@@ -172,7 +182,6 @@ elif st.session_state.page == "Settings":
     
     # Farm Name and Address Input
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
-    
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
     
     if address_input and farm_name_input != "":
