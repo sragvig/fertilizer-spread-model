@@ -2,13 +2,12 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
-import folium.plugins
+from folium.plugins import Draw
 
-# Streamlit App UI
+# Set Streamlit page config
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
-# Initialize session state if not already set
+# Initialize session state variables
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = ""
 if 'address' not in st.session_state:
@@ -16,33 +15,16 @@ if 'address' not in st.session_state:
 if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
     st.session_state.latitude = None
     st.session_state.longitude = None
-if 'page' not in st.session_state:
-    st.session_state.page = "Home"
 if 'farm_boundary' not in st.session_state:
     st.session_state.farm_boundary = None
 if 'setting_boundary' not in st.session_state:
     st.session_state.setting_boundary = False
+if 'page' not in st.session_state:
+    st.session_state.page = "Home"
 
 def navigate(page):
     st.session_state.page = page
-    st.experimental_rerun()
-
-def get_lat_lon(address):
-    """Attempts to geocode an address. Handles API errors gracefully."""
-    geolocator = Nominatim(user_agent="fern_farm_locator", timeout=5)
-    try:
-        location = geolocator.geocode(address)
-        if location:
-            return location.latitude, location.longitude
-        else:
-            st.warning("⚠️ Address not found. Please enter coordinates manually.")
-    except (GeocoderTimedOut, GeocoderUnavailable):
-        st.warning("⚠️ Geocoding service unavailable. Please enter coordinates manually.")
-    
-    # Default to manual input
-    lat = st.number_input("Enter latitude", value=37.0902)  # Default: USA center
-    lon = st.number_input("Enter longitude", value=-95.7129)
-    return lat, lon
+    st.rerun()
 
 # Sidebar Navigation
 st.sidebar.markdown("## 🌱 Navigation")
@@ -97,21 +79,30 @@ elif st.session_state.page == "My Farm":
         setup = st.radio("Would you like to set up your farm boundaries?", ["Yes", "No"], index=1)
         if setup == "Yes":
             st.session_state.setting_boundary = True
-            st.experimental_rerun()
+            st.rerun()
     
     if st.session_state.setting_boundary:
         if st.session_state.address:
-            st.session_state.latitude, st.session_state.longitude = get_lat_lon(st.session_state.address)
+            try:
+                geolocator = Nominatim(user_agent="fern_farm_locator")
+                location = geolocator.geocode(st.session_state.address, timeout=10)
+                if location:
+                    st.session_state.latitude = location.latitude
+                    st.session_state.longitude = location.longitude
+                else:
+                    st.warning("Could not find the location. Please enter a valid address.")
+            except Exception as e:
+                st.error("Geocoding service unavailable. Try again later.")
         
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
-            m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12, 
-                           tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", attr='Google')
-            draw = folium.plugins.Draw(
-                draw_polygon=True, draw_marker=False, draw_rectangle=False, draw_circle=False,
-                draw_circlemarker=False, draw_line=True, edit=True
+            m = folium.Map(
+                location=[st.session_state.latitude, st.session_state.longitude], 
+                zoom_start=12, 
+                tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+                attr="Google"
             )
-            m.add_child(draw)
+            Draw(export=True).add_to(m)
             map_data = st_folium(m, width=700, height=500)
             
             if map_data and "all_drawings" in map_data:
@@ -121,7 +112,7 @@ elif st.session_state.page == "My Farm":
                     st.write("Would you like to save these farm boundaries?")
                     if st.button("Save Boundaries"):
                         st.session_state.setting_boundary = False
-                        st.experimental_rerun()
+                        st.rerun()
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
