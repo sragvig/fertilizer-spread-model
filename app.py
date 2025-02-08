@@ -12,14 +12,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 
-# ========== Step I: Sample Data ==========
+# Read Soil Data
 soil_npk_df = pd.read_csv("soil_data.csv")
 
-# Encode categorical variable (soil type)
+# Encode categorical variable (soil type) since it's non-numerical
 le = LabelEncoder()
 soil_npk_df["soil_type"] = le.fit_transform(soil_npk_df["soil_type"])
 
-# ========== Step II: Train Machine Learning Model ==========
+# Train Model (Random Forest Regression)
 npk_X = soil_npk_df.drop(columns=["N", "P", "K"])  # Input features
 npk_y = soil_npk_df[["N", "P", "K"]]  # Target variables
 
@@ -62,17 +62,17 @@ if 'username' not in st.session_state:
 if 'password' not in st.session_state:
     st.session_state.password = 'soil'  # default password
 
-# Helper functions from your original code
+# Advection-Diffusion PDE Solver
 def solve_pde(initial_concentration, time_points, D, v, R, S):
     def dC_dt(C, t):
         dC = D * np.gradient(np.gradient(C)) - v * np.gradient(C) - R * C + S
         return dC
-    solution = odeint(dC_dt, initial_concentration, time_points)
+    solution = odeint(dC_dt, initial_concentration, time_points) # scipy ODE solver
     return solution
 
 @st.cache_data
-def generate_sample_data(days, fertilizer_amount, land_size):
-    time_points = np.linspace(0, days, days * 24)
+def generate_sample_data(sim_time, fertilizer_amount, land_size):
+    time_points = np.linspace(0, sim_time, sim_time * 24)
     initial_concentration = np.zeros(100)
     initial_concentration[0] = fertilizer_amount / land_size
     D, v, R, S = 0.1, 0.05, 0.01, 0.001
@@ -101,7 +101,7 @@ elif st.session_state.page == "My Farm":
     # Farm Boundary Setup with Folium Map
     if not st.session_state.farm_boundary:
         st.write("### Draw Your Farm Boundary")
-        m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=15,
+        m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=17,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
         draw = Draw(edit_options={"remove":True}, draw_options={"polyline": False, "polygon": False, "poly": False, "rectangle": True, "circle": False, "marker": False, "circlemarker": False})
@@ -139,7 +139,7 @@ elif st.session_state.page == "My Farm":
     else:
         # Display saved farm boundary on a map
         st.write("### Your Farm Map")
-        m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=16,
+        m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=17,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
         for sbounds in st.session_state.farm_boundary:
@@ -199,10 +199,11 @@ elif st.session_state.page == "My Farm":
         if fertilizer_type == "Select" or crop_type == "Select" or not soil_type_input:
             st.error("Please fill in all fields before running the simulation.")
         else:
-            land_size = (st.session_state.farm_boundary[0][1][0] - st.session_state.farm_boundary[0][0][0]) * (st.session_state.farm_boundary[0][1][1] - st.session_state.farm_boundary[0][0][1]) * (111139/100000 * 111139) # conversion to hectare
-            print("land size " + str(land_size))
-            simulation_days = 30
-            time_points, concentration = generate_sample_data(simulation_days, fertilizer_amount, land_size)
+            # conversion to ha
+            land_size = (st.session_state.farm_boundary[0][1][0] - st.session_state.farm_boundary[0][0][0]) * (st.session_state.farm_boundary[0][1][1] - st.session_state.farm_boundary[0][0][1]) * (111139/100000 * 111139)
+            print("land size (ha)" + str(land_size)) # debug
+            sim_time = 30
+            time_points, concentration = generate_sample_data(sim_time, fertilizer_amount, land_size)
 
             # Concentration vs Time Chart
             df_concentration = pd.DataFrame({
