@@ -13,8 +13,23 @@ st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 # Initialize session state variables
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = "My Farm"
+if 'address' not in st.session_state:
+    st.session_state.address = ""
+if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
+    st.session_state.latitude = None
+    st.session_state.longitude = None
 if 'farm_boundary' not in st.session_state:
     st.session_state.farm_boundary = None
+if 'marked_areas' not in st.session_state:
+    st.session_state.marked_areas = []
+if 'fertilizer_type' not in st.session_state:
+    st.session_state.fertilizer_type = None
+if 'fertilizer_amount' not in st.session_state:
+    st.session_state.fertilizer_amount = None
+if 'crop_type' not in st.session_state:
+    st.session_state.crop_type = None
+if 'soil_npk_ratio' not in st.session_state:
+    st.session_state.soil_npk_ratio = None
 
 # Helper functions from your original code
 def solve_pde(initial_concentration, time_points, D, v, R, S):
@@ -134,13 +149,23 @@ elif st.session_state.page == "My Farm":
                 st.metric(label="Total Runoff",
                           value=f"{total_runoff:.2f} ppm·hrs")
 
-# Settings Page (Restored)
+# Settings Page (Restored Features)
 elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
     
-    # User Inputs for Settings Page
-    farm_name = st.text_input("Farm Name", value=st.session_state.farm_name)
+    # User Inputs for Settings Page: Address and Geocoding Features Restored
+    farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     
-    if farm_name != "":
-        st.session_state.farm_name = farm_name
+    address_input = st.text_input("Farm Address:", value=st.session_state.address)
+    
+    if address_input and farm_name_input != "":
+        geolocator = Nominatim(user_agent="farm_locator")
+        location_result = geolocator.geocode(address_input)
 
+        if location_result is not None:
+            latitude_result = location_result.latitude
+            longitude_result = location_result.longitude
+            
+            # Save to session state variables.
+            if farm_name_input != "":
+                latitude_result
