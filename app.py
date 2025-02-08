@@ -31,6 +31,8 @@ if 'crop_type' not in st.session_state:
     st.session_state.crop_type = None
 if 'crop_amount' not in st.session_state:
     st.session_state.crop_amount = None
+if 'soil_type' not in st.session_state:
+    st.session_state.soil_type = None
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
@@ -72,17 +74,23 @@ elif st.session_state.page == "My Farm":
     fertilizer = st.selectbox("Select Fertilizer Type", fertilizer_choices)
     amount_fertilizer = st.number_input("Amount of Fertilizer Used (kg)", min_value=0.0, step=0.1)
 
-    # Crop Info
-    crop = st.text_input("Type of Crop Planted")
+    # Soil Type Dropdown
+    soil_types = ["Select", "Loam", "Clay", "Silt", "Sand", "Peat", "Saline"]
+    soil = st.selectbox("Select Soil Type", soil_types)
+
+    # Crop Info - Now a Dropdown for Crop Type
+    crop_types = ["Select", "Wheat", "Rice", "Corn", "Soybeans", "Cotton", "Tomato"]
+    crop = st.selectbox("Select Crop Type", crop_types)
     amount_crop = st.number_input("Amount of Crop (in hectares)", min_value=0.0, step=0.1)
 
-    # Save Fertilizer and Crop Info
-    if st.button("Save Fertilizer and Crop Info"):
+    # Save Fertilizer, Soil, and Crop Info
+    if st.button("Save Fertilizer, Soil, and Crop Info"):
         st.session_state.fertilizer_type = fertilizer
         st.session_state.fertilizer_amount = amount_fertilizer
+        st.session_state.soil_type = soil
         st.session_state.crop_type = crop
         st.session_state.crop_amount = amount_crop
-        st.success("Fertilizer and Crop Information Saved!")
+        st.success("Fertilizer, Soil, and Crop Information Saved!")
 
     # Continue with the existing farm boundary setup and display...
     if not st.session_state.setting_boundary and not st.session_state.farm_boundary:
@@ -197,12 +205,4 @@ elif st.session_state.page == "My Farm":
         m.add_child(draw)
         map_data = st_folium(m, width=700, height=500)
 
-        if map_data and "all_drawings" in map_data:
-            marked_areas = map_data["all_drawings"]
-            if marked_areas:
-                st.session_state.marked_areas.extend(marked_areas)
-
-        if st.session_state.marked_areas:
-            st.write("Marked regions for exclusion:")
-            for area in st.session_state.marked_areas:
-                st.write(f"Area: {area['type']} with coordinates: {area['geometry']['coordinates']}")
+        if map_data and "all
