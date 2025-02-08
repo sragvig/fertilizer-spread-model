@@ -205,4 +205,3 @@ elif st.session_state.page == "My Farm":
         m.add_child(draw)
         map_data = st_folium(m, width=700, height=500)
 
-        if map_data and "all
