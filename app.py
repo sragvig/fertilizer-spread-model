@@ -1,5 +1,3 @@
-# File Name: app.py
-
 import streamlit as st
 import folium
 from streamlit_folium import st_folium, folium_static
@@ -43,7 +41,7 @@ def navigate(page):
 st.sidebar.markdown("## 🌱 Navigation")
 st.sidebar.button("🏠 Home", on_click=lambda: navigate("Home"))
 st.sidebar.button("🌍 My Farm", on_click=lambda: navigate("My Farm"))
-st.sidebar.button("📊 Fertilizer Predictor", on_click=lambda: navigate("Fertilizer Predictor"))
+st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
 
 # Home Page
 if st.session_state.get('page', 'Home') == "Home":
@@ -51,7 +49,7 @@ if st.session_state.get('page', 'Home') == "Home":
     st.write("Your Personalized Farm Management System.")
     st.write(f"**Farm Name:** {st.session_state.farm_name}")
 
-# My Farm Page (Google Maps Integration)
+# My Farm Page (Google Maps + Fertilizer Predictor)
 elif st.session_state.page == "My Farm":
     st.title(f"🌍 {st.session_state.farm_name}")
     
@@ -87,10 +85,9 @@ elif st.session_state.page == "My Farm":
                 ).add_to(m)
         folium_static(m)
 
-# Fertilizer Runoff Predictor Page (Your Original Code)
-elif st.session_state.page == "Fertilizer Predictor":
-    st.title("Fertilizer Runoff Predictor")
-
+    # Fertilizer Runoff Predictor (Below Map)
+    st.write("### Fertilizer Runoff Predictor")
+    
     # User Inputs for Fertilizer Predictor
     fertilizer_choices = ["Select", "Urea", "NPK", "Compost", "Ammonium Nitrate"]
     fertilizer_type = st.selectbox("Select Fertilizer Type", fertilizer_choices)
@@ -136,3 +133,14 @@ elif st.session_state.page == "Fertilizer Predictor":
             with cols[2]:
                 st.metric(label="Total Runoff",
                           value=f"{total_runoff:.2f} ppm·hrs")
+
+# Settings Page (Restored)
+elif st.session_state.page == "Settings":
+    st.title("⚙️ Settings")
+    
+    # User Inputs for Settings Page
+    farm_name = st.text_input("Farm Name", value=st.session_state.farm_name)
+    
+    if farm_name != "":
+        st.session_state.farm_name = farm_name
+
