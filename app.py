@@ -65,7 +65,8 @@ if st.session_state.get('page', 'Home') == "Home":
     st.write("Your Personalized Farm Management System.")
     st.write(f"**Farm Name:** {st.session_state.farm_name}")
     st.write(f"**Username:** {st.session_state.username}")
-    st.write(f"**Password:** {st.session_state.password}")
+    password_hidden = "•" * len(st.session_state.password)
+    st.write(f"**Password:** {password_hidden}")
 
 # My Farm Page
 elif st.session_state.page == "My Farm":
@@ -103,7 +104,9 @@ elif st.session_state.page == "My Farm":
 # Settings Page
 elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
-    st.write(f"**Username:** {st.session_state.username}")
-    st.write(f"**Password:** {st.session_state.password}")
+    st.text_input("Username:", value=st.session_state.username, disabled=True)
+    show_password = st.checkbox("Show Password")
+    password_display = st.session_state.password if show_password else "•" * len(st.session_state.password)
+    st.text_input("Password:", value=password_display, disabled=True)
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
