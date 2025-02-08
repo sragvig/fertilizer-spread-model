@@ -31,6 +31,12 @@ if 'crop_type' not in st.session_state:
     st.session_state.crop_type = None
 if 'soil_type' not in st.session_state:
     st.session_state.soil_type = None
+if 'soil_nitrogen' not in st.session_state:
+    st.session_state.soil_nitrogen = None
+if 'soil_phosphorus' not in st.session_state:
+    st.session_state.soil_phosphorus = None
+if 'soil_potassium' not in st.session_state:
+    st.session_state.soil_potassium = None
 if 'page' not in st.session_state:
     st.session_state.page = "Home"
 
@@ -76,6 +82,12 @@ elif st.session_state.page == "My Farm":
     soil_types = ["Select", "Loam", "Clay", "Silt", "Sand", "Peat", "Saline"]
     soil = st.selectbox("Select Soil Type", soil_types)
 
+    # Soil NPK ratio inputs
+    st.write("### Soil NPK Ratio (kg per hectare)")
+    soil_nitrogen = st.number_input("Nitrogen (N) Content", min_value=0.0, step=0.1)
+    soil_phosphorus = st.number_input("Phosphorus (P) Content", min_value=0.0, step=0.1)
+    soil_potassium = st.number_input("Potassium (K) Content", min_value=0.0, step=0.1)
+
     # Crop Info - Now a Dropdown for Crop Type
     crop_types = ["Select", "Wheat", "Rice", "Corn", "Soybeans", "Cotton", "Tomato"]
     crop = st.selectbox("Select Crop Type", crop_types)
@@ -85,6 +97,9 @@ elif st.session_state.page == "My Farm":
         st.session_state.fertilizer_type = fertilizer
         st.session_state.fertilizer_amount = amount_fertilizer
         st.session_state.soil_type = soil
+        st.session_state.soil_nitrogen = soil_nitrogen
+        st.session_state.soil_phosphorus = soil_phosphorus
+        st.session_state.soil_potassium = soil_potassium
         st.session_state.crop_type = crop
         st.success("Fertilizer, Soil, and Crop Information Saved!")
 
@@ -178,25 +193,4 @@ elif st.session_state.page == "My Farm":
         m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", attr="Google")
         folium.Polygon(
-            locations=[point[1] for point in st.session_state.farm_boundary[0]['geometry']['coordinates']],
-            color="blue", fill=True, fill_color="blue", fill_opacity=0.2
-        ).add_to(m)
-
-        st_folium(m, width=700, height=500)
-
-        st.write("Now, mark the bodies of water and omitted regions.")
-
-        # Allow the user to draw on the map to mark areas
-        draw = Draw(
-            draw_options={ 
-                "polyline": {"shapeOptions": {"color": "red"}} ,
-                "polygon": {"shapeOptions": {"color": "green"}} ,
-                "circle": False,
-                "rectangle": False,
-                "marker": False,
-                "circlemarker": False
-            },
-            edit_options={"remove": True}
-        )
-        m.add_child(draw)
-        map_data = st_folium(m, width=700, height=500)
+            locations=[point[1] for point in
