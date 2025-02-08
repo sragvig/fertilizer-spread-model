@@ -105,8 +105,9 @@ elif st.session_state.page == "My Farm":
 elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
     st.text_input("Username:", value=st.session_state.username, disabled=True)
+    password_placeholder = st.empty()
     show_password = st.checkbox("Show Password")
     password_display = st.session_state.password if show_password else "•" * len(st.session_state.password)
-    st.text_input("Password:", value=password_display, disabled=True)
+    password_placeholder.text_input("Password:", value=password_display, disabled=True)
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
