@@ -1,8 +1,9 @@
-import streamlit as st 
+import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from geopy.geocoders import Nominatim
 import folium.plugins
+import json
 
 # Streamlit App UI
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
@@ -22,6 +23,7 @@ if 'farm_boundary' not in st.session_state:
 if 'setting_boundary' not in st.session_state:
     st.session_state.setting_boundary = False
 
+# Function to navigate pages
 def navigate(page):
     st.session_state.page = page
     st.experimental_rerun()
@@ -84,10 +86,13 @@ elif st.session_state.page == "My Farm":
     if st.session_state.setting_boundary:
         if st.session_state.address:
             geolocator = Nominatim(user_agent="fern_farm_locator")
-            location = geolocator.geocode(st.session_state.address)
-            if location:
-                st.session_state.latitude = location.latitude
-                st.session_state.longitude = location.longitude
+            try:
+                location = geolocator.geocode(st.session_state.address, timeout=10)
+                if location:
+                    st.session_state.latitude = location.latitude
+                    st.session_state.longitude = location.longitude
+            except:
+                st.warning("Geocoding service is unavailable. Please check your internet connection or try again later.")
         
         if st.session_state.latitude and st.session_state.longitude:
             st.write("### Draw Your Farm Boundary")
@@ -102,11 +107,18 @@ elif st.session_state.page == "My Farm":
             if map_data and "all_drawings" in map_data:
                 boundary = map_data["all_drawings"]
                 if boundary:
-                    st.session_state.farm_boundary = boundary
-                    st.write("Would you like to save these farm boundaries?")
-                    if st.button("Save Boundaries"):
-                        st.session_state.setting_boundary = False
-                        st.experimental_rerun()
+                    coordinates = boundary[-1]['geometry']['coordinates'][0]
+                    if len(coordinates) > 2:
+                        first_point = coordinates[0]
+                        last_point = coordinates[-1]
+                        distance = ((first_point[0] - last_point[0])**2 + (first_point[1] - last_point[1])**2) ** 0.5
+                        if distance < 0.0001:  # If close enough, close the shape
+                            coordinates.append(first_point)
+                            st.session_state.farm_boundary = coordinates
+                            st.write("Would you like to save these farm boundaries?")
+                            if st.button("Save Boundaries"):
+                                st.session_state.setting_boundary = False
+                                st.experimental_rerun()
         else:
             st.warning("Please set your farm address in Settings to display the map.")
     
