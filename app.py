@@ -43,8 +43,8 @@ if 'farm_name' not in st.session_state:
 if 'address' not in st.session_state:
     st.session_state.address = "My Address"
 if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
-    st.session_state.latitude = None
-    st.session_state.longitude = None
+    st.session_state.latitude = 0
+    st.session_state.longitude = 0
 if 'farm_boundary' not in st.session_state:
     st.session_state.farm_boundary = None
 if 'fertilizer_type' not in st.session_state:
@@ -101,7 +101,7 @@ elif st.session_state.page == "My Farm":
     # Farm Boundary Setup with Folium Map
     if not st.session_state.farm_boundary:
         st.write("### Draw Your Farm Boundary")
-        m = folium.Map(location=[0, 0], zoom_start=2,
+        m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=15,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
         draw = Draw(edit_options={"remove":True}, draw_options={"polyline": False, "polygon": False, "poly": False, "rectangle": True, "circle": False, "marker": False, "circlemarker": False})
@@ -132,14 +132,14 @@ elif st.session_state.page == "My Farm":
 
                 if rectangles:
                     st.session_state.farm_boundary = rectangles
-                    st.success("Success! Rectangle boundaries saved.")
+                    st.success("Success! Farm boundaries saved.")
                 else:
-                    st.warning("No rectangles found. Please draw a rectangle.")
+                    st.warning("No boundaries found. Please draw a rectangle.")
 
     else:
         # Display saved farm boundary on a map
         st.write("### Your Farm Map")
-        m = folium.Map(location=st.session_state.farm_boundary[0][0], zoom_start=16,
+        m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=16,
                        tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                        attr="Google")
         for sbounds in st.session_state.farm_boundary:
