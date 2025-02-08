@@ -93,8 +93,16 @@ elif st.session_state.page == "My Farm":
                 tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
                 attr="Google"
             )
-            draw = Draw(export=True, draw_polygon=True, draw_marker=False, draw_rectangle=False,
-                        draw_circle=False, draw_circlemarker=False, draw_line=False, edit=True)
+            
+            # Corrected Draw initialization with shape options for polygons
+            draw = Draw(export=True, 
+                        draw_polygon={'shapeOptions': {'color': '#ff0000'}}, 
+                        draw_marker=False, 
+                        draw_rectangle=False,
+                        draw_circle=False, 
+                        draw_circlemarker=False, 
+                        draw_line=False, 
+                        edit=True)
             m.add_child(draw)
             map_data = st_folium(m, width=700, height=500)
             
@@ -128,8 +136,14 @@ elif st.session_state.page == "My Farm":
         
         if st.session_state.marking_regions:
             st.write("Click on the map to mark bodies of water and omitted areas.")
-            draw = Draw(export=True, draw_polygon=True, draw_marker=False, draw_rectangle=False,
-                        draw_circle=False, draw_circlemarker=False, draw_line=False, edit=True)
+            draw = Draw(export=True, 
+                        draw_polygon={'shapeOptions': {'color': '#ff0000'}}, 
+                        draw_marker=False, 
+                        draw_rectangle=False,
+                        draw_circle=False, 
+                        draw_circlemarker=False, 
+                        draw_line=False, 
+                        edit=True)
             m.add_child(draw)
             st_folium(m, width=700, height=500)
 
