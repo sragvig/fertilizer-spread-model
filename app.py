@@ -11,6 +11,10 @@ from scipy.integrate import odeint
 st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
 # Initialize session state variables
+if 'username' not in st.session_state:
+    st.session_state.username = ""
+if 'password' not in st.session_state:
+    st.session_state.password = ""
 if 'farm_name' not in st.session_state:
     st.session_state.farm_name = "My Farm"
 if 'address' not in st.session_state:
@@ -57,7 +61,7 @@ st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
 
 # Home Page
 if st.session_state.get('page', 'Home') == "Home":
-    st.title("Welcome to FERN")
+    st.title(f"Welcome to FERN, {st.session_state.get('username', 'User')}")
     st.write("Your Personalized Farm Management System.")
     st.write(f"**Farm Name:** {st.session_state.farm_name}")
 
@@ -149,20 +153,36 @@ elif st.session_state.page == "My Farm":
 elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
     
-    # User Inputs for Settings Page: Address and Geocoding Features Restored
-    farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
+    # User account settings
+    st.header("User Account")
+    username = st.text_input("Username", value=st.session_state.get('username', ''))
+    password = st.text_input("Password", value=st.session_state.get('password', ''), type="password")
     
+    # Farm information
+    st.header("Farm Information")
+    farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
     
-    if address_input and farm_name_input != "":
-        geolocator = Nominatim(user_agent="farm_locator")
-        location_result = geolocator.geocode(address_input)
-
-        if location_result is not None:
-            latitude_result = location_result.latitude
-            longitude_result = location_result.longitude
+    if st.button("Update Settings"):
+        st.session_state.username = username
+        st.session_state.password = password
+        st.session_state.farm_name = farm_name_input
+        st.session_state.address = address_input
+        
+        if address_input:
+            geolocator = Nominatim(user_agent="farm_locator")
+            location_result = geolocator.geocode(address_input)
             
-            # Save to session state variables.
-            if farm_name_input != "":
-                latitude_result 
-
+            if location_result is not None:
+                st.session_state.latitude = location_result.latitude
+                st.session_state.longitude = location_result.longitude
+                st.success("Settings updated successfully!")
+                
+                # Display map with new location
+                m = folium.Map(location=[st.session_state.latitude, st.session_state.longitude], zoom_start=12)
+                folium.Marker([st.session_state.latitude, st.session_state.longitude], popup=farm_name_input).add_to(m)
+                folium_static(m)
+            else:
+                st.warning("Could not find the location. Please enter a valid address.")
+        else:
+            st.success("Settings updated successfully!")
