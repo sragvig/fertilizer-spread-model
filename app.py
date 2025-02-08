@@ -1,56 +1,166 @@
 import streamlit as st
+import folium
+from streamlit_folium import st_folium, folium_static
 from geopy.geocoders import Nominatim
-import json
+from folium.plugins import Draw
+import pandas as pd
+import numpy as np
+from scipy.integrate import odeint
 
-# Initialize session state variables if they don't exist
-if 'page' not in st.session_state:
-    st.session_state.page = 'Home'
+# Set Streamlit page config
+st.set_page_config(page_title="FERN", page_icon="🌱", layout="wide")
 
-if 'username' not in st.session_state:
-    st.session_state.username = 'fern'
-if 'password' not in st.session_state:
-    st.session_state.password = 'soil'
+# Ensure username and password persist across refreshes
+st.session_state.username = "fern"
+st.session_state.password = "soil"
 
+# Initialize session state variables
 if 'farm_name' not in st.session_state:
-    st.session_state.farm_name = 'My Farm'
+    st.session_state.farm_name = "My Farm"
 if 'address' not in st.session_state:
-    st.session_state.address = ''
+    st.session_state.address = ""
+if 'latitude' not in st.session_state or 'longitude' not in st.session_state:
+    st.session_state.latitude = None
+    st.session_state.longitude = None
+if 'farm_boundary' not in st.session_state:
+    st.session_state.farm_boundary = None
+if 'fertilizer_type' not in st.session_state:
+    st.session_state.fertilizer_type = None
+if 'fertilizer_amount' not in st.session_state:
+    st.session_state.fertilizer_amount = None
+if 'crop_type' not in st.session_state:
+    st.session_state.crop_type = None
+if 'soil_npk_ratio' not in st.session_state:
+    st.session_state.soil_npk_ratio = None
 
-# Set page layout
-st.set_page_config(page_title="FERN", layout="wide")
+# Helper functions for Fertilizer Runoff Predictor
+def solve_pde(initial_concentration, time_points, D, v, R, S):
+    def dC_dt(C, t):
+        dC = D * np.gradient(np.gradient(C)) - v * np.gradient(C) - R * C + S
+        return dC
+    solution = odeint(dC_dt, initial_concentration, time_points)
+    return solution
 
-# Function for home page
-def home_page():
+@st.cache_data
+def generate_sample_data(days, fertilizer_amount, land_size):
+    time_points = np.linspace(0, days, days * 24)
+    initial_concentration = np.zeros(100)
+    initial_concentration[0] = fertilizer_amount / land_size
+    D, v, R, S = 0.1, 0.05, 0.01, 0.001
+    concentration = solve_pde(initial_concentration, time_points, D, v, R, S)
+    return time_points, concentration[:, 0]
+
+# Navigation function
+def navigate(page):
+    st.session_state.page = page
+    st.rerun()
+
+# Sidebar Navigation
+st.sidebar.markdown("## 🌱 Navigation")
+st.sidebar.button("🏠 Home", on_click=lambda: navigate("Home"))
+st.sidebar.button("🌍 My Farm", on_click=lambda: navigate("My Farm"))
+st.sidebar.button("⚙️ Settings", on_click=lambda: navigate("Settings"))
+
+# Home Page
+if st.session_state.get('page', 'Home') == "Home":
     st.title("Welcome to FERN")
-    st.write(f"**Farm Name**: {st.session_state.farm_name}")
-    st.write(f"**Last Fertilizer Use**: {st.session_state.address}")
-    st.write(f"**Next Rain Day**: 3 days (mocked)")
+    st.write("Your Personalized Farm Management System.")
+    st.write(f"**Farm Name:** {st.session_state.farm_name}")
+    st.write(f"**Username:** {st.session_state.username}")
+    password_hidden = "•" * len(st.session_state.password)
+    st.write(f"**Password:** {password_hidden}")
 
-# Function for settings page
-def settings_page():
+# My Farm Page (Google Maps + Fertilizer Predictor)
+elif st.session_state.page == "My Farm":
+    st.title(f"🌍 {st.session_state.farm_name}")
+    
+    # Farm Boundary Setup with Folium Map
+    if not st.session_state.farm_boundary:
+        st.write("### Draw Your Farm Boundary")
+        m = folium.Map(location=[0, 0], zoom_start=2,
+                       tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+                       attr="Google")
+        draw = Draw(draw_options={"polyline": False, "rectangle": False,
+                                  "circle": False, "marker": False})
+        m.add_child(draw)
+        map_data = st_folium(m, width=700, height=500)
+
+        if map_data and "all_drawings" in map_data:
+            st.session_state.farm_boundary = map_data["all_drawings"]
+            st.success("Farm boundaries saved successfully!")
+    else:
+        # Display saved farm boundary on a map
+        st.write("### Your Farm Map")
+        m = folium.Map(location=[0, 0], zoom_start=2,
+                       tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+                       attr="Google")
+        for shape in st.session_state.farm_boundary:
+            if shape['geometry']['type'] == 'Polygon':
+                folium.Polygon(
+                    locations=shape['geometry']['coordinates'][0],
+                    color="blue",
+                    fill=True,
+                    fill_color="blue",
+                    fill_opacity=0.2
+                ).add_to(m)
+        folium_static(m)
+
+    # Fertilizer Runoff Predictor (Below Map)
+    st.write("### Fertilizer Runoff Predictor")
+    
+    # User Inputs for Fertilizer Predictor
+    fertilizer_choices = ["Select", "Urea", "NPK", "Compost", "Ammonium Nitrate"]
+    fertilizer_type = st.selectbox("Select Fertilizer Type", fertilizer_choices)
+    fertilizer_amount = st.number_input("Amount of Fertilizer Used (kg)", min_value=0.0, step=0.1)
+    
+    crop_choices = ["Select", "Rice", "Wheat", "Corn", "Soybeans", "Other"]
+    crop_type = st.selectbox("Type of Crop Planted", crop_choices)
+    
+    soil_npk_ratio = st.text_input("Soil NPK Ratio (e.g., 15-15-15)")
+    
+    land_size = st.number_input("Land Size (hectares)", min_value=0.1, step=0.1)
+
+    if st.button("Run Simulation"):
+        if fertilizer_type == "Select" or crop_type == "Select" or not soil_npk_ratio or land_size <= 0:
+            st.error("Please fill in all fields before running the simulation.")
+        else:
+            simulation_days = 30
+            time_points, concentration = generate_sample_data(simulation_days, fertilizer_amount, land_size)
+
+            # Concentration vs Time Chart
+            df_concentration = pd.DataFrame({
+                'Time (hours)': time_points,
+                'Concentration (ppm)': concentration
+            })
+            st.line_chart(df_concentration.set_index('Time (hours)'))
+
+            # Safety Analysis Metrics
+            safe_level = 50
+            peak_concentration = max(concentration)
+            total_runoff = np.trapz(concentration, time_points)
+            unsafe_hours = len(time_points[concentration > safe_level])
+
+            cols = st.columns(3)
+            with cols[0]:
+                st.metric(label="Peak Concentration",
+                          value=f"{peak_concentration:.2f} ppm",
+                          delta=f"{peak_concentration - safe_level:.2f} ppm above safe level"
+                          if peak_concentration > safe_level else "Within safe levels",
+                          delta_color="inverse")
+            with cols[1]:
+                st.metric(label="Time to Safe Level",
+                          value=f"{unsafe_hours} hours")
+            with cols[2]:
+                st.metric(label="Total Runoff",
+                          value=f"{total_runoff:.2f} ppm·hrs")
+
+# Settings Page (Restored Features)
+elif st.session_state.page == "Settings":
     st.title("⚙️ Settings")
     
-    # Display Username and Password
-    st.write("### User Information")
-    st.write(f"**Username:** {st.session_state.username}")
-    
-    # Password toggle feature
-    password_placeholder = st.empty()
-    if 'show_password' not in st.session_state:
-        st.session_state.show_password = False
-    
-    password_toggle = st.button("Show/Hide Password")
-    if password_toggle:
-        st.session_state.show_password = not st.session_state.show_password
-    
-    # Display password with the toggle button
-    if st.session_state.show_password:
-        password_placeholder.write(f"**Password:** {st.session_state.password}")
-    else:
-        password_placeholder.write(f"**Password:** {'•' * len(st.session_state.password)}")
-    
-    # Farm Name and Address Input
+    # User Inputs for Settings Page: Address and Geocoding Features Restored
     farm_name_input = st.text_input("Farm Name:", value=st.session_state.farm_name)
+    
     address_input = st.text_input("Farm Address:", value=st.session_state.address)
     
     if address_input and farm_name_input != "":
@@ -69,51 +179,3 @@ def settings_page():
             st.success("Farm location updated successfully!")
         else:
             st.warning("Could not find the location. Please enter a valid address.")
-    
-    # Fertilizer Inputs
-    st.write("### Fertilizer Model")
-    st.session_state.fertilizer_type = st.selectbox("Select Fertilizer Type:", ["None", "Type 1", "Type 2", "Type 3"])
-    st.session_state.fertilizer_amount = st.number_input("Enter Fertilizer Amount (kg):", min_value=0.0, value=0.0)
-    st.session_state.crop_type = st.selectbox("Select Crop Type:", ["None", "Crop 1", "Crop 2", "Crop 3"])
-    st.session_state.soil_npk_ratio = st.text_input("Enter Soil NPK Ratio (e.g., 5-5-5):", value="5-5-5")
-    
-    if st.session_state.fertilizer_type != "None" and st.session_state.fertilizer_amount > 0:
-        st.write("### Fertilizer Application Results")
-        # Here you could apply a model based on fertilizer inputs and soil properties.
-        # For simplicity, we'll show a simple distribution model.
-        # Ideally, you'd apply a detailed scientific model here using the convection-diffusion equation.
-        
-        # Simulate fertilizer spread (this is a placeholder model)
-        fertilizer_spread = st.session_state.fertilizer_amount * 0.75  # Assume 75% of fertilizer is applied correctly
-        st.write(f"Based on the fertilizer type **{st.session_state.fertilizer_type}**,")
-        st.write(f"{fertilizer_spread} kg of fertilizer is successfully applied to the farm.")
-        st.write(f"Crop Type: {st.session_state.crop_type}, Soil NPK: {st.session_state.soil_npk_ratio}")
-
-# Function to display the farm page (map, etc.)
-def farm_page():
-    st.title("My Farm")
-    st.write("### Farm Map")
-    # For map implementation, you would normally use something like folium or streamlit-folium.
-    # Here we're simulating the map with latitude and longitude display.
-    
-    if 'latitude' in st.session_state and 'longitude' in st.session_state:
-        st.write(f"Farm Location: Latitude: {st.session_state.latitude}, Longitude: {st.session_state.longitude}")
-    else:
-        st.warning("Farm location is not set. Please add farm address in settings.")
-
-# Handle navigation between pages
-def page_navigation():
-    pages = {
-        "Home": home_page,
-        "Settings": settings_page,
-        "My Farm": farm_page
-    }
-    
-    st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Select a Page", options=list(pages.keys()))
-    
-    st.session_state.page = page
-    pages[page]()
-
-# Main app execution
-page_navigation()
